@@ -149,10 +149,12 @@ export class TestableTestEditorState {
           [input],
           this.editorStore.graphManagerState.graph,
         )) as TestResult[];
-      const result = guaranteeNonNullable(testResults[0]);
-      assertTrue(
-        result.testable === this.testable &&
-          result.atomicTestId.atomicTest === this.test,
+      const result = guaranteeNonNullable(
+        testResults.filter(
+          (r) =>
+            r.testable === this.testable &&
+            r.atomicTestId.atomicTest === this.test,
+        )[0],
         'Unexpected test result',
       );
       this.handleTestResult(result);
