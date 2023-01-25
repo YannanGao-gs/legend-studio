@@ -51,3 +51,5 @@ export * from './data-structure/Stack.js';
 
 export * from './log/Logger.js';
 export * from './log/WebConsole.js';
+
+export * from './query-builder/QueryBuilderPlugin.js';

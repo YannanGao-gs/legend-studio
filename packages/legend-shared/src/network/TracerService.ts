@@ -44,6 +44,7 @@ export interface TracerServicePluginInfo {
   url: string;
 }
 
+//example 2
 export abstract class TracerServicePlugin<T> extends AbstractPlugin {
   install(pluginManager: TracerServicePluginManager): void {
     pluginManager.registerTracerServicePlugin(this);

@@ -37,6 +37,7 @@ import { ApplicationNavigationContextService } from './ApplicationNavigationCont
 import type { LegendApplicationPlugin } from './LegendApplicationPlugin.js';
 import { CommandCenter } from './CommandCenter.js';
 import { KeyboardShortcutsService } from './KeyboardShortcutsService.js';
+import { QueryBuilderService } from './QueryBuilderService.js';
 
 export enum ActionAlertType {
   STANDARD = 'STANDARD',
@@ -157,6 +158,9 @@ export class ApplicationStore<
    */
   TEMPORARY__isLightThemeEnabled = false;
 
+  // query builder plugin
+  queryBuilderService = new QueryBuilderService();
+
   constructor(config: T, navigator: WebApplicationNavigator, pluginManager: V) {
     makeObservable(this, {
       notification: observable,
@@ -197,6 +201,9 @@ export class ApplicationStore<
     this.tracerService.registerPlugins(pluginManager.getTracerServicePlugins());
     this.eventService.registerEventNotifierPlugins(
       pluginManager.getEventNotifierPlugins(),
+    );
+    this.queryBuilderService.registerQueryBuilderPlugins(
+      pluginManager.getQueryBuilderPlugins(),
     );
   }
 

@@ -58,6 +58,7 @@ import { QueryBuilderGraphFetchTreeState } from '../stores/fetch-structure/graph
 import { QueryBuilderPostTDSPanel } from './fetch-structure/QueryBuilderPostTDSPanel.js';
 import { QueryBuilderWatermarkEditor } from './watermark/QueryBuilderWatermark.js';
 import { QueryBuilderConstantExpressionPanel } from './QueryBuilderConstantExpressionPanel.js';
+import { QueryBuilder_LegendApplicationPlugin } from './QueryBuilder_LegendApplicationPlugin.js';
 
 export const QUERY_BUILDER_BACKDROP_CONTAINER_ID =
   'query-builder.backdrop-container';
@@ -188,9 +189,27 @@ const QueryBuilderPostGraphFetchPanel = observer(
   },
 );
 
+const renderCheckEntitlementsEditor = (
+  queryBuilderState: QueryBuilderState,
+  plugins: QueryBuilder_LegendApplicationPlugin[],
+): React.ReactNode => {
+  console.log('render render1');
+  const checkEntitlementsEditorRenderers = plugins.flatMap(
+    (plugin) => plugin.getCheckEntitlementsEditorRender?.() ?? [],
+  );
+  for (const editorRenderer of checkEntitlementsEditorRenderers) {
+    const editor = editorRenderer(queryBuilderState);
+    if (editor) {
+      return editor;
+    }
+  }
+  return undefined;
+};
+
 export const QueryBuilder = observer(
   (props: { queryBuilderState: QueryBuilderState }) => {
     const { queryBuilderState } = props;
+    const applicationStore = useApplicationStore();
     const isQuerySupported = queryBuilderState.isQuerySupported;
     const fetchStructureState = queryBuilderState.fetchStructureState;
     const isTDSState =
@@ -228,6 +247,12 @@ export const QueryBuilder = observer(
     const openWatermark = (): void => {
       queryBuilderState.watermarkState.setIsEditingWatermark(true);
     };
+
+    const renderCheckEntitlmentsEditor = (): void => {
+      queryBuilderState.checkEntitlementsState.setIsCheckingEntitlements(true);
+    };
+    console.log(applicationStore.pluginManager);
+    console.log(applicationStore.pluginManager.getApplicationPlugins);
 
     useCommands(queryBuilderState);
     const toggleShowOLAPGroupByPanel = (): void => {
@@ -348,7 +373,6 @@ export const QueryBuilder = observer(
                             </MenuContentItemLabel>
                           </MenuContentItem>
                         }
-
                         <MenuContentItem
                           onClick={toggleShowFilterPanel}
                           disabled={
@@ -422,6 +446,12 @@ export const QueryBuilder = observer(
                           <MenuContentItemIcon>{null}</MenuContentItemIcon>
                           <MenuContentItemLabel className="query-builder__sub-header__menu-content">
                             Show Watermark
+                          </MenuContentItemLabel>
+                        </MenuContentItem>
+                        <MenuContentItem onClick={renderCheckEntitlmentsEditor}>
+                          <MenuContentItemIcon>{null}</MenuContentItemIcon>
+                          <MenuContentItemLabel className="query-builder__sub-header__menu-content">
+                            Check Entitlements
                           </MenuContentItemLabel>
                         </MenuContentItem>
                       </MenuContent>
@@ -536,6 +566,16 @@ export const QueryBuilder = observer(
           {queryBuilderState.textEditorState.mode && (
             <QueryBuilderTextEditor queryBuilderState={queryBuilderState} />
           )}
+          {queryBuilderState.checkEntitlementsState.isCheckingEntitlements &&
+            renderCheckEntitlementsEditor(
+              queryBuilderState,
+              applicationStore.pluginManager
+                .getApplicationPlugins()
+                .filter(
+                  (plugin) =>
+                    plugin instanceof QueryBuilder_LegendApplicationPlugin,
+                ) as QueryBuilder_LegendApplicationPlugin[],
+            )}
         </div>
         <QueryBuilderStatusBar queryBuilderState={queryBuilderState} />
       </div>

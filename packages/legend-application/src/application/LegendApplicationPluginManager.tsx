@@ -23,6 +23,8 @@ import {
   type TelemetryServicePluginManager,
   type TracerServicePlugin,
   type TracerServicePluginManager,
+  type QueryBuilderPlugin,
+  type QueryBuilderPluginManager,
   AbstractPluginManager,
 } from '@finos/legend-shared';
 import type { LegendApplicationPlugin } from '../stores/LegendApplicationPlugin.js';
@@ -33,12 +35,14 @@ export class LegendApplicationPluginManager<T extends LegendApplicationPlugin>
     LoggerPluginManager,
     TelemetryServicePluginManager,
     TracerServicePluginManager,
-    EventNotifierPluginManager
+    EventNotifierPluginManager,
+    QueryBuilderPluginManager
 {
   protected loggerPlugins: LoggerPlugin[] = [];
   protected telemetryServicePlugins: TelemetryServicePlugin[] = [];
   protected tracerServicePlugins: TracerServicePlugin<unknown>[] = [];
   protected eventNotifierPlugins: EventNotifierPlugin[] = [];
+  protected queryBuilderPlugins: QueryBuilderPlugin[] = [];
   protected applicationPlugins: T[] = [];
 
   registerLoggerPlugin(plugin: LoggerPlugin): void {
@@ -61,6 +65,10 @@ export class LegendApplicationPluginManager<T extends LegendApplicationPlugin>
     this.applicationPlugins.push(plugin);
   }
 
+  registerQueryBuilderPlugin(plugin: QueryBuilderPlugin): void {
+    this.queryBuilderPlugins.push(plugin);
+  }
+
   getLoggerPlugins(): LoggerPlugin[] {
     return [...this.loggerPlugins];
   }
@@ -79,5 +87,9 @@ export class LegendApplicationPluginManager<T extends LegendApplicationPlugin>
 
   getApplicationPlugins(): T[] {
     return [...this.applicationPlugins];
+  }
+
+  getQueryBuilderPlugins(): QueryBuilderPlugin[] {
+    return [...this.queryBuilderPlugins];
   }
 }
