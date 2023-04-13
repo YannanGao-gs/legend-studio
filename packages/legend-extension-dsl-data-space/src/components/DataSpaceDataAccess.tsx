@@ -33,12 +33,40 @@ import {
   DatasetEntitlementUnsupportedReport,
 } from '@finos/legend-graph';
 import { DataGrid } from '@finos/legend-lego/data-grid';
+import { DSL_DataSpace_LegendApplicationPlugin } from './DSL_DataSpace_LegendApplicationPlugin.js';
+import type { DataSpaceViewerDataAccessState } from '../stores/DataSpaceViewerDataAccessState.js';
+
+const renderDetailedEntitlementReportEditor = (
+  dataSpaceViewerDataAccessState: DataSpaceViewerDataAccessState,
+  plugins: DSL_DataSpace_LegendApplicationPlugin[],
+): React.ReactNode | undefined => {
+  const detailedEntitlementReportEditorRender = plugins.flatMap(
+    (plugin) => plugin.getDetailedEntitlementReportEditorRender() ?? [],
+  );
+  for (const editorRenderer of detailedEntitlementReportEditorRender) {
+    const editor = editorRenderer(dataSpaceViewerDataAccessState);
+    if (editor) {
+      return editor;
+    }
+  }
+  return undefined;
+};
 
 const DataAccessOverview = observer(
   (props: { dataSpaceViewerState: DataSpaceViewerState }) => {
     const { dataSpaceViewerState } = props;
     const dataAccessState = dataSpaceViewerState.dataAccessState;
     const applicationStore = useApplicationStore();
+
+    const detailedEntitlementReportEditor =
+      renderDetailedEntitlementReportEditor(
+        dataAccessState,
+        applicationStore.pluginManager
+          .getApplicationPlugins()
+          .filter(
+            (plugin) => plugin instanceof DSL_DataSpace_LegendApplicationPlugin,
+          ) as DSL_DataSpace_LegendApplicationPlugin[],
+      );
 
     useEffect(() => {
       flowResult(dataAccessState.fetchDatasetSpecifications()).catch(
