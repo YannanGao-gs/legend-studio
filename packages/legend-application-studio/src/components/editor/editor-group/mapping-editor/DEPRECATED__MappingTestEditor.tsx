@@ -384,7 +384,7 @@ export const DEPRECATED__MappingTestFlatDataInputDataBuilder = observer(
     // Input data
     const updateInput = (val: string): void =>
       flatData_setData(inputDataState.inputData, val);
-
+    //here
     return (
       <div className="panel__content mapping-test-editor__input-data-panel__content">
         <CodeEditor

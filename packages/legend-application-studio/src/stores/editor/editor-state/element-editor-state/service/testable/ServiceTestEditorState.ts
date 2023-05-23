@@ -89,6 +89,7 @@ export class ServiceTestParameterState {
   readonly editorStore: EditorStore;
   readonly setupState: ServiceTestSetupState;
   parameterValue: ParameterValue;
+  isForExternalFormat = false;
   constructor(
     parameterValue: ParameterValue,
     editorStore: EditorStore,
@@ -378,7 +379,11 @@ export class ServiceTestSetupState {
 
   generateTestParameterValues(): void {
     try {
+      console.log('generateTestParameterValues');
       const varExpressions = this.queryVariableExpressions;
+      console.log(
+        this.testState.suiteState.testableState.serviceEditorState.serviceQuery,
+      );
       const parameterValueStates = varExpressions
         .map((varExpression) => {
           const mockValue = generateVariableExpressionMockValue(
