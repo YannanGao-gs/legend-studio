@@ -1,0 +1,697 @@
+###Service
+Service demo::externalFormat::flatdata::simple::service::FlatdataInternalizeGraphFetchChecked
+{
+  pattern: '/flatdata/showcase/flatdataInternalizeGraphFetchChecked';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::Person->internalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      $data
+    )->graphFetchChecked(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName
+        }
+      }#
+    )->serialize(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        test_1:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'First Name,Last Name\nJohn,Doe\nOlive,Yew'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "defects" : [ ],\n  "source" : {\n    "number" : 1,\n    "lineNumber" : 2,\n    "record" : "John,Doe",\n    "recordValues" : [ {\n      "address" : "First Name",\n      "rawValue" : "John"\n    }, {\n      "address" : "Last Name",\n      "rawValue" : "Doe"\n    } ]\n  },\n  "value" : {\n    "firstName" : "John"\n  }\n}, {\n  "defects" : [ ],\n  "source" : {\n    "number" : 2,\n    "lineNumber" : 3,\n    "record" : "Olive,Yew",\n    "recordValues" : [ {\n      "address" : "First Name",\n      "rawValue" : "Olive"\n    }, {\n      "address" : "Last Name",\n      "rawValue" : "Yew"\n    } ]\n  },\n  "value" : {\n    "firstName" : "Olive"\n  }\n} ]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::simple::service::FlatdataInternalizeGraphFetch
+{
+  pattern: '/flatdata/showcase/flatdataInternalizeGraphFetch';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::Person->internalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      $data
+    )->graphFetch(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName
+        }
+      }#
+    )->serialize(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        test_1:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'First Name,Last Name\nJohn,Doe\nOlive,Yew'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "firstName" : "John"\n}, {\n  "firstName" : "Olive"\n} ]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::allTypes::service::AllTypesService
+{
+  pattern: '/flatdata/showcase/allTypesService';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::allTypes::models::AllTypesRecord->internalize(
+      demo::externalFormat::flatdata::allTypes::binding::AllTypesBinding,
+      $data
+    )->serialize(
+      #{
+        demo::externalFormat::flatdata::allTypes::models::AllTypesRecord{
+          string,
+          optionalString,
+          integer,
+          optionalInteger,
+          customInteger,
+          float,
+          optionalFloat,
+          customFloat,
+          decimal,
+          optionalDecimal,
+          customDecimal,
+          boolean,
+          optionalBoolean,
+          customBoolean,
+          date,
+          optionalDate,
+          customDate,
+          dateTime,
+          optionalDateTime,
+          customDateTime
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        simpleTest:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'string~optionalString~integer~optionalInteger~customInteger~float~optionalFloat~customFloat~decimal~optionalDecimal~customDecimal~boolean~optionalBoolean~customBoolean~date~optionalDate~customDate~dateTime~optionalDateTime~customDateTime\ntest~null~1~null~1,000~1.0~null~1,000.23~1.0~null~1,000.23~true~null~Y~2022-12-12~null~12/12/2022~2022-12-12T01:14:12.123Z~null~13/08/2022 02:14:12\ntest~testOptional~1~23~1,000~1.0~1.23~1,000.23~1.0~3.54~1,000.23~true~false~N~2022-12-12~2022-12-12~12/12/2022~2022-12-12T01:14:12.123-0500~2022-12-12T01:14:12.123Z~13/08/2022 02:14:12'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "string" : "test",\n  "optionalString" : null,\n  "integer" : 1,\n  "optionalInteger" : null,\n  "customInteger" : 1000,\n  "float" : 1.0,\n  "optionalFloat" : null,\n  "customFloat" : 1000.23,\n  "decimal" : 1.0,\n  "optionalDecimal" : null,\n  "customDecimal" : 1000.23,\n  "boolean" : true,\n  "optionalBoolean" : null,\n  "customBoolean" : true,\n  "date" : "2022-12-12",\n  "optionalDate" : null,\n  "customDate" : "2022-12-12",\n  "dateTime" : "2022-12-12T01:14:12.123",\n  "optionalDateTime" : null,\n  "customDateTime" : "2022-08-13T02:14:12.000"\n}, {\n  "string" : "test",\n  "optionalString" : "testOptional",\n  "integer" : 1,\n  "optionalInteger" : 23,\n  "customInteger" : 1000,\n  "float" : 1.0,\n  "optionalFloat" : 1.23,\n  "customFloat" : 1000.23,\n  "decimal" : 1.0,\n  "optionalDecimal" : 3.54,\n  "customDecimal" : 1000.23,\n  "boolean" : true,\n  "optionalBoolean" : false,\n  "customBoolean" : false,\n  "date" : "2022-12-12",\n  "optionalDate" : "2022-12-12",\n  "customDate" : "2022-12-12",\n  "dateTime" : "2022-12-12T06:14:12.123",\n  "optionalDateTime" : "2022-12-12T01:14:12.123",\n  "customDateTime" : "2022-08-13T02:14:12.000"\n} ]';
+                  }#;
+              }#
+          ]
+        },
+        testWithAnotherFormat:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'string~optionalString~integer~optionalInteger~customInteger~float~optionalFloat~customFloat~decimal~optionalDecimal~customDecimal~boolean~optionalBoolean~customBoolean~date~optionalDate~customDate~dateTime~optionalDateTime~customDateTime\ntest~null~1~null~1,000~1.0~null~1,000.23~1.0~null~1,000.23~true~null~Y~2022-12-12~null~12 12 2022~2022-12-12T01:14:12.123Z~null~13 08 2022 02:14:12\ntest~testOptional~1~23~1,000~1.0~1.23~1,000.23~1.0~3.54~1,000.23~true~false~N~2022-12-12~2022-12-12~12 12 2022~2022-12-12T01:14:12.123-0500~2022-12-12T01:14:12.123Z~13 08 2022 02:14:12'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "string" : "test",\n  "optionalString" : null,\n  "integer" : 1,\n  "optionalInteger" : null,\n  "customInteger" : 1000,\n  "float" : 1.0,\n  "optionalFloat" : null,\n  "customFloat" : 1000.23,\n  "decimal" : 1.0,\n  "optionalDecimal" : null,\n  "customDecimal" : 1000.23,\n  "boolean" : true,\n  "optionalBoolean" : null,\n  "customBoolean" : true,\n  "date" : "2022-12-12",\n  "optionalDate" : null,\n  "customDate" : "2022-12-12",\n  "dateTime" : "2022-12-12T01:14:12.123",\n  "optionalDateTime" : null,\n  "customDateTime" : "2022-08-13T02:14:12.000"\n}, {\n  "string" : "test",\n  "optionalString" : "testOptional",\n  "integer" : 1,\n  "optionalInteger" : 23,\n  "customInteger" : 1000,\n  "float" : 1.0,\n  "optionalFloat" : 1.23,\n  "customFloat" : 1000.23,\n  "decimal" : 1.0,\n  "optionalDecimal" : 3.54,\n  "customDecimal" : 1000.23,\n  "boolean" : true,\n  "optionalBoolean" : false,\n  "customBoolean" : false,\n  "date" : "2022-12-12",\n  "optionalDate" : "2022-12-12",\n  "customDate" : "2022-12-12",\n  "dateTime" : "2022-12-12T06:14:12.123",\n  "optionalDateTime" : "2022-12-12T01:14:12.123",\n  "customDateTime" : "2022-08-13T02:14:12.000"\n} ]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::simple::service::FlatdataInternalizeChecked
+{
+  pattern: '/flatdata/showcase/flatdataInternalizeChecked';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::Person->internalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      $data
+    )->checked()->serialize(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName,
+          lastName
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        test_1:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'First Name,Last Name\nJohn,Doe\nOlive,Yew'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "defects" : [ ],\n  "source" : {\n    "number" : 1,\n    "lineNumber" : 2,\n    "record" : "John,Doe",\n    "recordValues" : [ {\n      "address" : "First Name",\n      "rawValue" : "John"\n    }, {\n      "address" : "Last Name",\n      "rawValue" : "Doe"\n    } ]\n  },\n  "value" : {\n    "firstName" : "John",\n    "lastName" : "Doe"\n  }\n}, {\n  "defects" : [ ],\n  "source" : {\n    "number" : 2,\n    "lineNumber" : 3,\n    "record" : "Olive,Yew",\n    "recordValues" : [ {\n      "address" : "First Name",\n      "rawValue" : "Olive"\n    }, {\n      "address" : "Last Name",\n      "rawValue" : "Yew"\n    } ]\n  },\n  "value" : {\n    "firstName" : "Olive",\n    "lastName" : "Yew"\n  }\n} ]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::allTypes::service::FlatDataWithEnum
+{
+  pattern: '/flatdata/showcase/flatDataWithEnum';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::allTypes::models::Person->internalize(
+      demo::externalFormat::flatdata::allTypes::binding::EnumBinding,
+      $data
+    )->checked()->serialize(
+      #{
+        demo::externalFormat::flatdata::allTypes::models::Person{
+          name,
+          gender
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        simpleTest:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'name,gender\nJohn Doe,Male'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '{\n  "defects" : [ ],\n  "source" : {\n    "number" : 1,\n    "lineNumber" : 2,\n    "record" : "John Doe,Male",\n    "recordValues" : [ {\n      "address" : "name",\n      "rawValue" : "John Doe"\n    }, {\n      "address" : "gender",\n      "rawValue" : "Male"\n    } ]\n  },\n  "value" : {\n    "name" : "John Doe",\n    "gender" : "MALE"\n  }\n}';
+                  }#;
+              }#
+          ]
+        },
+        testWithWrongData:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'name,gender\nJohn Doe,Neuter'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '{\n  "defects" : [ {\n    "id" : null,\n    "externalId" : null,\n    "message" : "Neuter does not match to any value in Gender",\n    "enforcementLevel" : "Critical",\n    "ruleType" : "ClassStructure",\n    "ruleDefinerPath" : "demo::externalFormat::flatdata::allTypes::models::Person",\n    "path" : [ ]\n  } ],\n  "source" : {\n    "number" : 1,\n    "lineNumber" : 2,\n    "record" : "John Doe,Neuter",\n    "recordValues" : [ {\n      "address" : "name",\n      "rawValue" : "John Doe"\n    }, {\n      "address" : "gender",\n      "rawValue" : "Neuter"\n    } ]\n  },\n  "value" : null\n}';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::simple::service::FlatdataInternalize
+{
+  pattern: '/flatdata/showcase/flatdataInternalize';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::Person->internalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      $data
+    )->serialize(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName,
+          lastName
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        test_1:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'First Name,Last Name\nJohn,Doe\nOlive,Yew'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ \n  {\n    "firstName" : "John",\n    "lastName" : "Doe"\n  },\n  {\n    "firstName" : "Olive",\n    "lastName" : "Yew"\n  }\n]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::simple::service::FlatdataInternalizeExternalize
+{
+  pattern: '/flatdata/showcase/flatdataInternalizeExternalize';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::Person->internalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      $data
+    )->externalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName,
+          lastName
+        }
+      }#
+    );
+  }
+}
+
+Service demo::externalFormat::flatdata::simple::service::FlatdataInternalizeGraphFetchCheckedWithDefects
+{
+  pattern: '/flatdata/showcase/flatdataInternalizeGraphFetchCheckedWithDefects';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::Person->internalize(
+      demo::externalFormat::flatdata::simple::binding::PersonBinding,
+      $data
+    )->graphFetchChecked(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName
+        }
+      }#
+    )->serialize(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        test_1:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'First Name,Last Name\nJohn,Doe\nOlive,Y'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "defects" : [ ],\n  "source" : {\n    "number" : 1,\n    "lineNumber" : 2,\n    "record" : "John,Doe",\n    "recordValues" : [ {\n      "address" : "First Name",\n      "rawValue" : "John"\n    }, {\n      "address" : "Last Name",\n      "rawValue" : "Doe"\n    } ]\n  },\n  "value" : {\n    "firstName" : "John"\n  }\n}, {\n  "defects" : [ {\n    "id" : "lastNameInvalid",\n    "externalId" : null,\n    "message" : "Constraint :[lastNameInvalid] violated in the Class Person",\n    "enforcementLevel" : "Error",\n    "ruleType" : "ClassConstraint",\n    "ruleDefinerPath" : "demo::externalFormat::flatdata::simple::models::Person",\n    "path" : [ ]\n  } ],\n  "source" : {\n    "number" : 2,\n    "lineNumber" : 3,\n    "record" : "Olive,Y",\n    "recordValues" : [ {\n      "address" : "First Name",\n      "rawValue" : "Olive"\n    }, {\n      "address" : "Last Name",\n      "rawValue" : "Y"\n    } ]\n  },\n  "value" : {\n    "firstName" : "Olive"\n  }\n} ]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Service demo::externalFormat::flatdata::simple::service::FlatdataWithM2MChaining
+{
+  pattern: '/flatdata/showcase/flatdataWithM2MChaining';
+  owners:
+  [
+    'maheha'
+  ];
+  documentation: 'Demonstrates usage of internalize with flatdata';
+  autoActivateUpdates: true;
+  execution: Single
+  {
+    query: data: String[1]|demo::externalFormat::flatdata::simple::models::TargetPerson.all()->graphFetch(
+      #{
+        demo::externalFormat::flatdata::simple::models::TargetPerson{
+          fullName
+        }
+      }#
+    )->from(
+      demo::externalFormat::flatdata::simple::mapping::M2MMapping,
+      demo::externalFormat::flatdata::simple::models::Person->getRuntimeWithModelQueryConnection(
+        demo::externalFormat::flatdata::simple::binding::PersonBinding,
+        $data
+      )
+    )->serialize(
+      #{
+        demo::externalFormat::flatdata::simple::models::Person{
+          firstName,
+          lastName
+        }
+      }#
+    );
+  }
+  testSuites:
+  [
+    testSuite_1:
+    {
+      data:
+      [
+      ]
+      tests:
+      [
+        test_1:
+        {
+          serializationFormat: PURE;
+          parameters:
+          [
+            data = 'First Name,Last Name\nJohn,Doe\nOlive,Yew'
+          ]
+          asserts:
+          [
+            assertion_1:
+              EqualToJson
+              #{
+                expected :
+                  ExternalFormat
+                  #{
+                    contentType: 'application/json';
+                    data: '[ {\n  "fullName" : "John Doe"\n}, {\n  "fullName" : "Olive Yew"\n} ]';
+                  }#;
+              }#
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+
+###ExternalFormat
+Binding demo::externalFormat::flatdata::simple::binding::PersonBinding
+{
+  schemaSet: demo::externalFormat::flatdata::simple::schemaSet::PersonSchema;
+  contentType: 'application/x.flatdata';
+  modelIncludes: [
+    demo::externalFormat::flatdata::simple::models::Person
+  ];
+}
+
+Binding demo::externalFormat::flatdata::allTypes::binding::AllTypesBinding
+{
+  schemaSet: demo::externalFormat::flatdata::allTypes::schemaSet::AllTypesSchemaSet;
+  contentType: 'application/x.flatdata';
+  modelIncludes: [
+    demo::externalFormat::flatdata::allTypes::models::AllTypesRecord
+  ];
+}
+
+Binding demo::externalFormat::flatdata::allTypes::binding::EnumBinding
+{
+  schemaSet: demo::externalFormat::flatdata::allTypes::schemaSet::EnumSchemaSet;
+  contentType: 'application/x.flatdata';
+  modelIncludes: [
+    demo::externalFormat::flatdata::allTypes::models::Person
+  ];
+}
+
+SchemaSet demo::externalFormat::flatdata::simple::schemaSet::PersonSchema
+{
+  format: FlatData;
+  schemas: [
+    {
+      content: 'section Person: DelimitedWithHeadings \n{  \n  delimiter: \',\';  \n  scope.untilEof;   \n  nullString: \'\';\n  \n  Record  \n  { \n    \'First Name\' : STRING; \n    \'Last Name\' : STRING; \n  }\n}';
+    }
+  ];
+}
+
+SchemaSet demo::externalFormat::flatdata::allTypes::schemaSet::EnumSchemaSet
+{
+  format: FlatData;
+  schemas: [
+    {
+      content: 'section Person: DelimitedWithHeadings\n{\n  scope.untilEof;\n  delimiter: \',\';\n\n  Record\n  {\n    name: STRING;\n    gender: STRING;\n  }\n}';
+    }
+  ];
+}
+
+SchemaSet demo::externalFormat::flatdata::allTypes::schemaSet::AllTypesSchemaSet
+{
+  format: FlatData;
+  schemas: [
+    {
+      content: 'section AllTypes: DelimitedWithHeadings\n{\n  scope.untilEof;\n  nullString: \'null\';  \n  delimiter: \'~\';\n\n  Record\n  {\n    string: STRING;\n    optionalString: STRING(optional);\n    integer: INTEGER;\n    optionalInteger: INTEGER(optional);\n    customInteger: INTEGER(format=\'#,##0\');\n    float: DECIMAL;\n    optionalFloat: DECIMAL(optional);\n    customFloat: DECIMAL(format=\'#,##0.0#\');\n    decimal: DECIMAL;\n    optionalDecimal: DECIMAL(optional);\n    customDecimal: DECIMAL(format=\'#,##0.0#\');\n    boolean: BOOLEAN;\n    optionalBoolean: BOOLEAN(optional);\n    customBoolean: BOOLEAN(trueString=\'Y\', falseString=\'N\');\n    date: DATE;\n    optionalDate: DATE(optional);\n    customDate: DATE(format=[\'MM/dd/yyyy\', \'MM dd yyyy\']);\n    dateTime: DATETIME;\n    optionalDateTime: DATETIME(optional);\n    customDateTime: DATETIME(format=[\'dd/MM/yyyy HH:mm:ss\', \'dd MM yyyy HH:mm:ss\']);\n  }\n}';
+    }
+  ];
+}
+
+
+###Pure
+Enum demo::externalFormat::flatdata::allTypes::models::Gender
+{
+  MALE,
+  FEMALE,
+  OTHER
+}
+
+Class demo::externalFormat::flatdata::allTypes::models::AllTypesRecord
+{
+  string: String[1];
+  optionalString: String[0..1];
+  integer: Integer[1];
+  optionalInteger: Integer[0..1];
+  customInteger: Integer[1];
+  float: Float[1];
+  optionalFloat: Float[0..1];
+  customFloat: Float[1];
+  decimal: Float[1];
+  optionalDecimal: Float[0..1];
+  customDecimal: Float[1];
+  boolean: Boolean[1];
+  optionalBoolean: Boolean[0..1];
+  customBoolean: Boolean[1];
+  date: StrictDate[1];
+  optionalDate: StrictDate[0..1];
+  customDate: StrictDate[1];
+  dateTime: DateTime[1];
+  optionalDateTime: DateTime[0..1];
+  customDateTime: DateTime[1];
+}
+
+Class demo::externalFormat::flatdata::simple::models::TargetPerson
+{
+  fullName: String[1];
+}
+
+Class demo::externalFormat::flatdata::allTypes::models::Person
+{
+  name: String[1];
+  gender: demo::externalFormat::flatdata::allTypes::models::Gender[1];
+}
+
+Class demo::externalFormat::flatdata::simple::models::Person
+[
+  lastNameInvalid: $this.lastName->length() > 1
+]
+{
+  firstName: String[1];
+  lastName: String[1];
+}
+
+
+###Mapping
+Mapping demo::externalFormat::flatdata::simple::mapping::M2MMapping
+(
+  *demo::externalFormat::flatdata::simple::models::TargetPerson: Pure
+  {
+    ~src demo::externalFormat::flatdata::simple::models::Person
+    fullName: $src.firstName + ' ' + $src.lastName
+  }
+)
