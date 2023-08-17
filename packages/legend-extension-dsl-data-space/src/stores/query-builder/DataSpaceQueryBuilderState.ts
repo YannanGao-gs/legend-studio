@@ -29,13 +29,21 @@ import {
   type QueryExecutionContext,
   type Runtime,
   Class,
-  type Mapping,
   getDescendantsOfPackage,
   Package,
+  createGraphBuilderReport,
+  GRAPH_MANAGER_EVENT,
+  LegendSDLC,
+  V1_EngineRuntime,
+  V1_Mapping,
+  V1_PackageableRuntime,
+  V1_PureGraphManager,
+  resolvePackagePathAndElementName,
   QueryDataSpaceExecutionContext,
 } from '@finos/legend-graph';
 import {
   DepotScope,
+  resolveVersion,
   SNAPSHOT_VERSION_ALIAS,
   type DepotServerClient,
   type StoredEntity,
@@ -47,6 +55,10 @@ import {
   getNullableFirstEntry,
   filterByType,
   uniq,
+  StopWatch,
+  LogEvent,
+  guaranteeNonNullable,
+  guaranteeType,
 } from '@finos/legend-shared';
 import { action, flow, makeObservable, observable } from 'mobx';
 import { renderDataSpaceQueryBuilderSetupPanelContent } from '../../components/query-builder/DataSpaceQueryBuilder.js';
@@ -58,6 +70,7 @@ import {
 import { DATA_SPACE_ELEMENT_CLASSIFIER_PATH } from '../../graph-manager/protocol/pure/DSL_DataSpace_PureProtocolProcessorPlugin.js';
 import { DataSpaceAdvancedSearchState } from '../query/DataSpaceAdvancedSearchState.js';
 import type { DataSpaceAnalysisResult } from '../../graph-manager/action/analytics/DataSpaceAnalysis.js';
+import type { QueryEditorStore } from '@finos/legend-application-query';
 import {
   extractDataSpaceInfo,
   type DataSpaceInfo,
@@ -66,10 +79,11 @@ import type { ProjectGAVCoordinates } from '@finos/legend-storage';
 import { generateDataSpaceTemplateQueryCreatorRoute } from '../../__lib__/to-delete/DSL_DataSpace_LegendQueryNavigation_to_delete.js';
 
 export const resolveUsableDataSpaceClasses = (
-  dataSpace: DataSpace,
-  mapping: Mapping,
-  graphManagerState: GraphManagerState,
+  queryBuilderState: DataSpaceQueryBuilderState,
 ): Class[] => {
+  const dataSpace = queryBuilderState.dataSpace;
+  const mapping = queryBuilderState.executionContext.mapping.value;
+  const graphManagerState = queryBuilderState.graphManagerState;
   if (dataSpace.elements?.length) {
     const dataSpaceElements = dataSpace.elements.map((ep) => ep.element.value);
     return uniq([
@@ -80,6 +94,19 @@ export const resolveUsableDataSpaceClasses = (
         .flat()
         .filter(filterByType(Class)),
     ]);
+  } else if (
+    queryBuilderState.explorerState.mappingModelCoverageAnalysisResult
+  ) {
+    const compatibleClassPaths =
+      queryBuilderState.explorerState.mappingModelCoverageAnalysisResult.mappedEntities.map(
+        (e) => e.classPath,
+      );
+    const uniqueCompatibleClasses = compatibleClassPaths.filter(
+      (val, index) => compatibleClassPaths.indexOf(val) === index,
+    );
+    return graphManagerState.graph.classes.filter((c) =>
+      uniqueCompatibleClasses.includes(c.path),
+    );
   }
   return getMappingCompatibleClasses(mapping, graphManagerState.usableClasses);
 };
@@ -315,6 +342,8 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
   executionContext!: DataSpaceExecutionContext;
   showRuntimeSelector = false;
   isTemplateQueryDialogOpen = false;
+  advancedSearchState?: DataSpaceAdvancedSearchState | undefined;
+  isLightGraphEnabled!: boolean;
 
   constructor(
     applicationStore: GenericLegendApplicationStore,
@@ -324,6 +353,7 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
     dataSpace: DataSpace,
     executionContext: DataSpaceExecutionContext,
     dataSpaceRepo: DataSpacesBuilderRepoistory | undefined,
+    isLightGraphEnabled: boolean,
     onDataSpaceChange: (val: DataSpaceInfo) => void,
     dataSpaceAnalysisResult?: DataSpaceAnalysisResult | undefined,
     onExecutionContextChange?:
@@ -338,15 +368,19 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
 
     makeObservable(this, {
       executionContext: observable,
+      isLightGraphEnabled: observable,
       showRuntimeSelector: observable,
       isTemplateQueryDialogOpen: observable,
       setExecutionContext: action,
+      setIsLightGraphEnabled: action,
       setShowRuntimeSelector: action,
       setTemplateQueryDialogOpen: action,
     });
 
     this.dataSpace = dataSpace;
     this.executionContext = executionContext;
+    this.projectInfo = projectInfo;
+    this.isLightGraphEnabled = isLightGraphEnabled;
     this.onDataSpaceChange = onDataSpaceChange;
     this.onExecutionContextChange = onExecutionContextChange;
     this.onRuntimeChange = onRuntimeChange;
@@ -365,6 +399,10 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
     return this.showRuntimeSelector
       ? 'query-builder__setup__data-space--with-runtime'
       : 'query-builder__setup__data-space';
+  }
+
+  setIsLightGraphEnabled(val: boolean): void {
+    this.isLightGraphEnabled = val;
   }
 
   override getQueryExecutionContext(): QueryExecutionContext {
@@ -393,26 +431,125 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
    * - If no class is chosen, try to choose a compatible class
    * - If the chosen class is compatible with the new selected execution context mapping, do nothing, otherwise, try to choose a compatible class
    */
-  propagateExecutionContextChange(
+  async propagateExecutionContextChange(
     executionContext: DataSpaceExecutionContext,
-  ): void {
+    editorStore?: QueryEditorStore,
+    isGraphBuildingNotRequired?: boolean,
+  ): Promise<void> {
     const mapping = executionContext.mapping.value;
-    this.changeMapping(mapping);
+    let compatibleClasses;
     const mappingModelCoverageAnalysisResult =
       this.dataSpaceAnalysisResult?.executionContextsIndex.get(
         executionContext.name,
       )?.mappingModelCoverageAnalysisResult;
-    if (mappingModelCoverageAnalysisResult) {
+    if (this.dataSpaceAnalysisResult && mappingModelCoverageAnalysisResult) {
+      if (!isGraphBuildingNotRequired && editorStore) {
+        const stopWatch = new StopWatch();
+        const graph = this.graphManagerState.createNewGraph();
+
+        const graph_buildReport = createGraphBuilderReport();
+        // Create dummy mappings and runtimes
+        // TODO?: these stubbed mappings and runtimes are not really useful that useful, so either we should
+        // simplify the model here or potentially refactor the backend analytics endpoint to return these as model
+        const mappingModels = uniq(
+          Array.from(
+            this.dataSpaceAnalysisResult.executionContextsIndex.values(),
+          ).map((context) => context.mapping),
+        ).map((m) => {
+          const _mapping = new V1_Mapping();
+          const [packagePath, name] = resolvePackagePathAndElementName(m.path);
+          _mapping.package = packagePath;
+          _mapping.name = name;
+          return guaranteeType(
+            this.graphManagerState.graphManager,
+            V1_PureGraphManager,
+          ).elementProtocolToEntity(_mapping);
+        });
+        const runtimeModels = uniq(
+          Array.from(
+            this.dataSpaceAnalysisResult.executionContextsIndex.values(),
+          )
+            .map((context) => context.defaultRuntime)
+            .concat(
+              Array.from(
+                this.dataSpaceAnalysisResult.executionContextsIndex.values(),
+              ).flatMap((val) => val.compatibleRuntimes),
+            ),
+        ).map((r) => {
+          const runtime = new V1_PackageableRuntime();
+          const [packagePath, name] = resolvePackagePathAndElementName(r.path);
+          runtime.package = packagePath;
+          runtime.name = name;
+          runtime.runtimeValue = new V1_EngineRuntime();
+          return guaranteeType(
+            this.graphManagerState.graphManager,
+            V1_PureGraphManager,
+          ).elementProtocolToEntity(runtime);
+        });
+        const graphEntities = guaranteeNonNullable(
+          mappingModelCoverageAnalysisResult.entities,
+        )
+          .concat(mappingModels)
+          .concat(runtimeModels)
+          // NOTE: if an element could be found in the graph already it means it comes from system
+          // so we could rid of it
+          .filter(
+            (el) =>
+              !graph.getNullableElement(el.path, false) &&
+              !el.path.startsWith('meta::'),
+          );
+        await this.graphManagerState.graphManager.buildGraph(
+          graph,
+          graphEntities,
+          ActionState.create(),
+          {
+            origin: new LegendSDLC(
+              guaranteeNonNullable(this.projectInfo).groupId,
+              guaranteeNonNullable(this.projectInfo).artifactId,
+              resolveVersion(guaranteeNonNullable(this.projectInfo).versionId),
+            ),
+          },
+          graph_buildReport,
+          true,
+        );
+        this.graphManagerState.graph = graph;
+        const dependency_buildReport = createGraphBuilderReport();
+        // report
+        stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
+        const graphBuilderReportData = {
+          timings:
+            this.applicationStore.timeService.finalizeTimingsRecord(stopWatch),
+          dependencies: dependency_buildReport,
+          dependenciesCount:
+            this.graphManagerState.graph.dependencyManager.numberOfDependencies,
+          graph: graph_buildReport,
+        };
+        editorStore.logBuildGraphMetrics(graphBuilderReportData);
+
+        this.applicationStore.logService.info(
+          LogEvent.create(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS),
+          graphBuilderReportData,
+        );
+      }
+      const compatibleClassPaths =
+        mappingModelCoverageAnalysisResult.mappedEntities.map(
+          (e) => e.classPath,
+        );
+      const uniqueCompatibleClasses = compatibleClassPaths.filter(
+        (val, index) => compatibleClassPaths.indexOf(val) === index,
+      );
+      compatibleClasses = this.graphManagerState.graph.classes.filter((c) =>
+        uniqueCompatibleClasses.includes(c.path),
+      );
       this.explorerState.mappingModelCoverageAnalysisResult =
         mappingModelCoverageAnalysisResult;
+    } else {
+      compatibleClasses = resolveUsableDataSpaceClasses(this);
     }
+    this.changeMapping(mapping);
+
     this.changeRuntime(new RuntimePointer(executionContext.defaultRuntime));
 
-    const compatibleClasses = resolveUsableDataSpaceClasses(
-      this.dataSpace,
-      mapping,
-      this.graphManagerState,
-    );
     // if there is no chosen class or the chosen one is not compatible
     // with the mapping then pick a compatible class if possible
     if (!this.class || !compatibleClasses.includes(this.class)) {
@@ -421,5 +558,6 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
         this.changeClass(possibleNewClass);
       }
     }
+    this.explorerState.refreshTreeData();
   }
 }

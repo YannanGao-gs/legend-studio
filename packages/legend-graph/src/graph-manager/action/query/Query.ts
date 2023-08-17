@@ -104,6 +104,8 @@ export class LightQuery {
   lastUpdatedAt?: number | undefined;
   createdAt?: number | undefined;
   lastOpenAt?: number | undefined;
+  mapping?: string | PackageableElementReference<Mapping> | undefined;
+  taggedValues?: QueryTaggedValue[] | undefined;
 
   isCurrentUserQuery = false;
 }
@@ -121,6 +123,8 @@ export const toLightQuery = (query: Query): LightQuery => {
   lightQuery.lastOpenAt = query.lastOpenAt;
   lightQuery.createdAt = query.createdAt;
   lightQuery.lastUpdatedAt = query.lastUpdatedAt;
+  lightQuery.mapping = query.mapping.value.path;
+  lightQuery.taggedValues = query.taggedValues;
   return lightQuery;
 };
 

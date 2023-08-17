@@ -273,6 +273,7 @@ export abstract class AbstractPureGraphManager {
     buildState: ActionState,
     options?: GraphBuilderOptions,
     report?: GraphManagerOperationReport,
+    buildRequiredGraph?: boolean | undefined,
   ): Promise<void>;
 
   /**

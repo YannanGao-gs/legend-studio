@@ -18,14 +18,19 @@ import {
   type AbstractPureGraphManager,
   AbstractPureGraphManagerExtension,
   type QueryInfo,
+  type PureProtocolProcessorPlugin,
+  type V1_PureModelContextData,
+  type PureModel,
+  type GraphManagerOperationReport,
 } from '@finos/legend-graph';
-import type { Entity } from '@finos/legend-storage';
+import type { Entity, ProjectGAVCoordinates } from '@finos/legend-storage';
 import {
   guaranteeNonNullable,
   type ActionState,
   type PlainObject,
 } from '@finos/legend-shared';
 import type { DataSpaceAnalysisResult } from '../../action/analytics/DataSpaceAnalysis.js';
+import type { V1_DataSpaceAnalysisResult } from './v1/engine/analytics/V1_DataSpaceAnalysis.js';
 
 export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPureGraphManagerExtension {
   abstract analyzeDataSpace(
@@ -35,8 +40,10 @@ export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPu
     actionState?: ActionState,
   ): Promise<DataSpaceAnalysisResult>;
 
-  abstract retrieveDataSpaceAnalysisFromCache(
-    cacheRetriever: () => Promise<PlainObject<DataSpaceAnalysisResult>>,
+  abstract analyzeDataSpaceCoverage(
+    dataSpacePath: string,
+    entitiesRetriever: () => Promise<Entity[]>,
+    cacheRetriever?: () => Promise<PlainObject<DataSpaceAnalysisResult>>,
     actionState?: ActionState,
   ): Promise<DataSpaceAnalysisResult | undefined>;
 
@@ -51,6 +58,17 @@ export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPu
   ): Promise<Entity>;
 
   abstract IsTemplateQueryIdValid(dataSpaceEntity: Entity, id: string): boolean;
+
+  abstract buildDataSpaceAnalytics(
+    analytics:
+      | PlainObject<V1_DataSpaceAnalysisResult>
+      | V1_DataSpaceAnalysisResult,
+    plugins: PureProtocolProcessorPlugin[],
+    graphReport?: GraphManagerOperationReport | undefined,
+    pureGraph?: PureModel | undefined,
+    pmcd?: V1_PureModelContextData | undefined,
+    projectInfo?: ProjectGAVCoordinates,
+  ): Promise<DataSpaceAnalysisResult>;
 }
 
 export const DSL_DataSpace_getGraphManagerExtension = (

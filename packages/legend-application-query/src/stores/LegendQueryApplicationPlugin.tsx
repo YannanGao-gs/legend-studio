@@ -16,6 +16,9 @@
 
 import { LegendApplicationPlugin } from '@finos/legend-application';
 import type { Query } from '@finos/legend-graph';
+import type { QueryBuilderState } from '@finos/legend-query-builder';
+import type React from 'react';
+import type { LegendQueryPluginManager } from '../application/LegendQueryPluginManager.js';
 import type {
   QueryBuilderState,
   QueryBuilder_LegendApplicationPlugin_Extension,
@@ -54,7 +57,6 @@ export type QuerySetupActionConfiguration = {
 };
 
 export type ExistingQueryEditorStateBuilder = (
-  query: Query,
   editorStore: ExistingQueryEditorStore,
 ) => Promise<QueryBuilderState | undefined>;
 
@@ -62,6 +64,10 @@ export type NewQueryNavigationPath = (
   query: Query,
   editorStore: ExistingQueryEditorStore,
 ) => string | undefined;
+
+export type ExistingQueryGraphBuilderChecker = (
+  editorStore: ExistingQueryEditorStore,
+) => boolean | undefined;
 
 export type QueryEditorActionConfiguration = {
   key: string;
@@ -97,4 +103,26 @@ export class LegendQueryApplicationPlugin
    * Get the list of actions (configurations) for query setup.
    */
   getExtraQuerySetupActionConfigurations?(): QuerySetupActionConfiguration[];
+
+  /**
+   * Get the list of query editor help menu action configurations.
+   */
+  getExtraQueryEditorHelpMenuActionConfigurations?(): QueryEditorHelpMenuActionConfiguration[];
+
+  /**
+   * Get the list of existing query editor state builders.
+   */
+  getExtraExistingQueryEditorStateBuilders?(): ExistingQueryEditorStateBuilder[];
+
+  /**
+   * Get the list of existing query graph builder checkers
+   */
+  getExtraExistingQueryGraphBuilderCheckers?(): ExistingQueryGraphBuilderChecker[];
+
+  /**
+   * Get the list of query editor action renderer configurations.
+   */
+  getExtraQueryEditorActionConfigurations?(
+    editorStore: QueryEditorStore,
+  ): QueryEditorActionConfiguration[];
 }

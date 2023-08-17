@@ -218,6 +218,8 @@ export class V1_LightQuery {
   lastUpdatedAt?: number | undefined;
   createdAt?: number | undefined;
   lastOpenAt?: number | undefined;
+  mapping?: string | undefined;
+  taggedValues?: V1_TaggedValue[] | undefined;
 
   static readonly serialization = new SerializationFactory(
     createModelSchema(V1_Query, {
@@ -227,8 +229,10 @@ export class V1_LightQuery {
       lastUpdatedAt: optional(primitive()),
       createdAt: optional(primitive()),
       lastOpenAt: optional(primitive()),
+      mapping: optional(primitive()),
       name: primitive(),
       owner: optional(primitive()),
+      taggedValues: optional(list(usingModelSchema(V1_taggedValueModelSchema))),
       versionId: primitive(),
       originalVersionId: optional(primitive()),
     }),

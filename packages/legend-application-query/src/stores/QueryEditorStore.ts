@@ -409,6 +409,10 @@ export abstract class QueryEditorStore {
     // do nothing
   }
 
+  requiresGraphBuilding(): boolean {
+    return true;
+  }
+
   async buildQueryForPersistence(
     query: Query,
     rawLambda: RawLambda,
@@ -508,7 +512,9 @@ export abstract class QueryEditorStore {
       );
 
       yield this.setUpEditorState();
-      yield flowResult(this.buildGraph());
+      if (this.requiresGraphBuilding()) {
+        yield flowResult(this.buildGraph());
+      }
       this.queryBuilderState = (yield this.initializeQueryBuilderState(
         stopWatch,
       )) as QueryBuilderState;
@@ -1445,9 +1451,24 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
     throw new UnsupportedOperationError(`Unsupported query execution context`);
   }
 
-  async initializeQueryBuilderState(
-    stopWatch: StopWatch,
-  ): Promise<QueryBuilderState> {
+  override requiresGraphBuilding(): boolean {
+    const existingQueryGraphBuilderCheckers =
+      this.applicationStore.pluginManager
+        .getApplicationPlugins()
+        .flatMap(
+          (plugin) =>
+            plugin.getExtraExistingQueryGraphBuilderCheckers?.() ?? [],
+        );
+    for (const checker of existingQueryGraphBuilderCheckers) {
+      const isGraphBuildingRequired = checker(this);
+      if (isGraphBuildingRequired !== undefined) {
+        return isGraphBuildingRequired;
+      }
+    }
+    return true;
+  }
+
+  async setupQuery(): Promise<void> {
     const query = await this.graphManagerState.graphManager.getQuery(
       this.queryId,
       this.graphManagerState.graph,
@@ -1457,6 +1478,26 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
       this.applicationStore.userDataService,
       query.id,
     );
+  }
+
+  async initializeQueryBuilderState(
+    stopWatch: StopWatch,
+  ): Promise<QueryBuilderState> {
+    let queryBuilderState: QueryBuilderState | undefined;
+    const existingQueryEditorStateBuilders = this.applicationStore.pluginManager
+      .getApplicationPlugins()
+      .flatMap(
+        (plugin) => plugin.getExtraExistingQueryEditorStateBuilders?.() ?? [],
+      );
+    for (const builder of existingQueryEditorStateBuilders) {
+      queryBuilderState = await builder(this);
+      if (queryBuilderState) {
+        break;
+      }
+    }
+
+    await this.setupQuery();
+    const query = guaranteeNonNullable(this.query);
 
     // if no extension found, fall back to basic `class -> mapping -> runtime` mode
     const queryBuilderState = await this.initQueryBuildStateFromQuery(query);
