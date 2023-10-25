@@ -546,9 +546,7 @@ export const createUrlStringFromData = (
   contentType: ContentType,
   base64: boolean,
 ): string =>
-  base64
-    ? `data:${contentType};base64,${window.btoa(data)}`
-    : `data:${contentType},${encodeURIComponent(data)}`;
+  base64 ? `data:${contentType};base64,${window.btoa(data)}` : `dtestet`;
 
 // Buffer.from(str, 'base64')` and`buf.toString('base64')
 // NOTE: we can potentially use the native `URLSearchParams` as it provides

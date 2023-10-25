@@ -38,7 +38,7 @@ export class JsonModelConnection
   constructor(
     store: PackageableElementReference<ModelStore>,
     _class: PackageableElementReference<Class>,
-    url = createUrlStringFromData('{}', ContentType.APPLICATION_JSON, false),
+    url = 'executor:default', //createUrlStringFromData('{}', ContentType.APPLICATION_JSON, false),
   ) {
     super(store);
     this.class = _class;
