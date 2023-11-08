@@ -50,6 +50,7 @@ export {
   ServiceQueryBuilderState,
 } from './stores/workflows/ServiceQueryBuilderState.js';
 export {
+  QUERY_BUILDER_PURE_PATH,
   TDS_COLUMN_GETTER,
   COLUMN_SORT_TYPE,
   QUERY_BUILDER_SUPPORTED_FUNCTIONS,

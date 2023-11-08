@@ -108,11 +108,11 @@ const SQLPlaygroundDatabaseSchemaExplorerTreeNodeContainer = observer(
   },
 );
 
-type RelationalDatabaseConnectionOption = {
+export type RelationalDatabaseConnectionOption = {
   label: React.ReactNode;
   value: PackageableConnection;
 };
-const buildRelationalDatabaseConnectionOption = (
+export const buildRelationalDatabaseConnectionOption = (
   connection: PackageableConnection,
 ): RelationalDatabaseConnectionOption => {
   const connectionValue = guaranteeRelationalDatabaseConnection(connection);
