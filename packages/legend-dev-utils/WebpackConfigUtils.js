@@ -22,6 +22,8 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
+// import CompressionPlugin from 'compression-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import { createRequire } from 'module';
 
@@ -171,8 +173,10 @@ export const getBaseWebpackConfig = (
           removeAvailableModules: false,
           removeEmptyChunks: false,
           splitChunks: false,
+          minimize: true,
+          minimizer: [new optimization()],
         }
-      : {},
+      : { minimize: true, minimizer: [new TerserPlugin()] },
     plugins: [
       ((isEnvProduction && !isEnvProduction_Fast) || isEnvDevelopment_Debug) &&
         new CircularDependencyPlugin({
@@ -313,6 +317,9 @@ export const getWebAppBaseWebpackConfig = (
               },
             },
           },
+          usedExports: true,
+          minimize: true,
+          // minimizer: [new TerserPlugin()],
         }
       : baseConfig.optimization,
     plugins: [
@@ -334,6 +341,7 @@ export const getWebAppBaseWebpackConfig = (
           ? resolve(dirname, appConfig.faviconPath)
           : undefined,
       }),
+      // new CompressionPlugin(),
       /**
        * Since by default we use `monaco-editor` in our app core modules
        * We specify it here to slim down the `webpack` config in top-level modules
@@ -375,6 +383,11 @@ export const getWebAppBaseWebpackConfig = (
           'wordHighlighter',
           'gotoSymbol',
         ],
+        worker: {
+          dynamicWorkerLoading: false,
+          globalName: 'monaco',
+          filename: 'monaco.worker.[contenthash].js',
+        },
       }),
     ].filter(Boolean),
   };
