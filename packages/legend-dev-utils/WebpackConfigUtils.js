@@ -22,6 +22,8 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 import CircularDependencyPlugin from 'circular-dependency-plugin';
+import CompressionPlugin from 'compression-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import { createRequire } from 'module';
 
@@ -171,8 +173,10 @@ export const getBaseWebpackConfig = (
           removeAvailableModules: false,
           removeEmptyChunks: false,
           splitChunks: false,
+          usedExports: true,
+          minimizer: [new TerserPlugin()],
         }
-      : {},
+      : { minimizer: [new TerserPlugin()], usedExport: true },
     plugins: [
       ((isEnvProduction && !isEnvProduction_Fast) || isEnvDevelopment_Debug) &&
         new CircularDependencyPlugin({
@@ -313,6 +317,8 @@ export const getWebAppBaseWebpackConfig = (
               },
             },
           },
+          usedExports: true,
+          // minimizer: [new TerserPlugin()],
         }
       : baseConfig.optimization,
     plugins: [
@@ -334,6 +340,7 @@ export const getWebAppBaseWebpackConfig = (
           ? resolve(dirname, appConfig.faviconPath)
           : undefined,
       }),
+      new CompressionPlugin(),
       /**
        * Since by default we use `monaco-editor` in our app core modules
        * We specify it here to slim down the `webpack` config in top-level modules

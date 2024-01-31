@@ -25,105 +25,197 @@
  * @workaround ESM
  * See https://github.com/microsoft/TypeScript/issues/49298
  */
-import ReactIcons from './CJS__ReactIcons.cjs';
-
-/* eslint @typescript-eslint/no-unsafe-assignment: 0 */
-const TB = ReactIcons.TB;
-export const ArrowsJoinIcon = TB.TbArrowsJoin2;
-export const ArrowsSplitIcon = TB.TbArrowsSplit2;
-export const FunctionIcon = TB.TbMathFunction;
-export const RepoIcon = TB.TbBook;
-export const OffIcon = TB.TbCircleOff;
-export const CalendarClockIcon = TB.TbCalendarTime;
-export const LastModifiedIcon = TB.TbClockEdit;
-export const SQLIcon = TB.TbSql;
-export const Snowflake_BrandIcon = TB.TbBrandSnowflake;
-
-const MD = ReactIcons.MD;
-export const ManageSearchIcon = MD.MdManageSearch; // to be reviewed
-export const PencilIcon = MD.MdModeEdit;
-export const StringTypeIcon = MD.MdTextFields;
-export const MoreVerticalIcon = MD.MdMoreVert;
-export const MoreHorizontalIcon = MD.MdMoreHoriz;
-export const WrapTextIcon = MD.MdWrapText;
-export const SaveAsIcon = MD.MdSaveAs;
-export const SaveCurrIcon = MD.MdSave;
-export const VerticalAlignBottomIcon = MD.MdVerticalAlignBottom;
-export const RefreshIcon = MD.MdRefresh;
-export const SigmaIcon = MD.MdFunctions;
-export const CompareIcon = MD.MdCompareArrows;
-export const CheckListIcon = MD.MdPlaylistAddCheck;
-export const AddIcon = MD.MdAdd; // to be reviewed
-export const EditIcon = MD.MdEdit; // to be reviewed
-export const SubjectIcon = MD.MdSubject;
-export const ViewHeadlineIcon = MD.MdViewHeadline;
-export const AssistantIcon = MD.MdAssistant;
-export const SettingsEthernetIcon = MD.MdSettingsEthernet;
-export const LinkIcon = MD.MdLink;
-export const WindowIcon = MD.MdWindow;
-export const ReviewIcon = MD.MdReviews;
-export const CalculateIcon = MD.MdCalculate;
-export const LaunchIcon = MD.MdRocketLaunch;
-export const DatasetIcon = MD.MdOutlineDataset;
-export const VerifiedIcon = MD.MdVerified;
-export const QueryIcon = MD.MdQueryStats;
-export const CenterFocusIcon = MD.MdFilterCenterFocus;
-export const DescriptionIcon = MD.MdOutlineDescription;
-export const QuestionAnswerIcon = MD.MdQuestionAnswer;
-export const FoldIcon = MD.MdUnfoldLess;
-export const UnfoldIcon = MD.MdUnfoldMore;
-
-const VSC = ReactIcons.VSC;
-export const ErrorIcon = VSC.VscError;
-export const WarningIcon = VSC.VscWarning;
-export const WordWrapIcon = VSC.VscWordWrap;
-export const GoToFileIcon = VSC.VscGoToFile;
-export const CloseIcon = VSC.VscClose;
-export const RunAllIcon = VSC.VscRunAll;
-export const RunErrorsIcon = VSC.VscRunErrors;
-export const OpenPreviewIcon = VSC.VscOpenPreview;
-export const DiffIcon = VSC.VscDiff;
-export const RegexIcon = VSC.VscRegex;
-export const VersionsIcon = VSC.VscVersions;
-export const CaseSensitiveIcon = VSC.VscCaseSensitive;
-export const WholeWordMatchIcon = VSC.VscWholeWord;
-export const ReferencesIcon = VSC.VscReferences;
-export const WandIcon = VSC.VscWand;
-export const CollapseTreeIcon = VSC.VscCollapseAll;
-export const ExpandTreeIcon = VSC.VscExpandAll;
-export const SerializeIcon = VSC.VscJson;
-export const TableIcon = VSC.VscTable;
-
-const BS = ReactIcons.BS;
-export const FilledTriangleIcon = BS.BsFillTriangleFill;
-export const TabulatedDataFileIcon = BS.BsFillFileEarmarkSpreadsheetFill;
-export const BundleIcon = BS.BsBoxSeam;
-export const ThinVerticalDragHandleIcon = BS.BsGripVertical;
-export const AlignTopIcon = BS.BsAlignTop;
-export const AlignMiddleIcon = BS.BsAlignMiddle;
-export const AlignBottomIcon = BS.BsAlignBottom;
-export const AlignStartIcon = BS.BsAlignStart;
-export const AlignCenterIcon = BS.BsAlignCenter;
-export const AlignEndIcon = BS.BsAlignEnd;
-export const DistributeHorizontalIcon = BS.BsDistributeHorizontal;
-export const DistributeVerticalIcon = BS.BsDistributeVertical;
-export const DataAccessIcon = BS.BsDatabaseFillLock;
-export const DataReadyIcon = BS.BsDatabaseFillCheck;
-export const ThinChevronUpIcon = BS.BsChevronUp;
-export const ThinChevronDownIcon = BS.BsChevronDown;
-export const ThinChevronRightIcon = BS.BsChevronRight;
-export const ThinChevronLeftIcon = BS.BsChevronLeft;
-export const QuestionSquareIcon = BS.BsQuestionSquare;
-export const QuestionSquareFillIcon = BS.BsQuestionSquareFill;
-export const GenericTextFileIcon = BS.BsTextLeft;
 
 /**
- * using @react-icons/all-files/... to reduce bundle size
- * @react-icons/all-files doesn't contain all icons from react-icons
+ * HEADS-UP: Try to use '@react-icons/all-files' to reduce bundle size
+ * if there is a missing icon in '@react-icons/all-files' then use 'react-icons/{..}/index.js', which is not good-looking...
+ * bundle size to be reduced to ~kb significantly.
  * Reference:
  * https://github.com/react-icons/react-icons/blob/master/README.md
  * https://github.com/react-icons/react-icons/issues/154#issuecomment-895976123
  */
+
+//======================================================= TB =======================================================
+import {
+  TbArrowsJoin2,
+  TbArrowsSplit2,
+  TbMathFunction,
+  TbBook,
+  TbCircleOff,
+  TbCalendarTime,
+  TbClockEdit,
+  TbSql,
+  TbBrandSnowflake,
+} from 'react-icons/tb/index.js';
+
+export const ArrowsJoinIcon = TbArrowsJoin2;
+export const ArrowsSplitIcon = TbArrowsSplit2;
+export const FunctionIcon = TbMathFunction;
+export const RepoIcon = TbBook;
+export const OffIcon = TbCircleOff;
+export const CalendarClockIcon = TbCalendarTime;
+export const LastModifiedIcon = TbClockEdit;
+export const SQLIcon = TbSql;
+export const Snowflake_BrandIcon = TbBrandSnowflake;
+
+//======================================================= MD =======================================================
+import {
+  MdManageSearch,
+  MdModeEdit,
+  MdTextFields,
+  MdMoreVert,
+  MdMoreHoriz,
+  MdWrapText,
+  MdSaveAs,
+  MdSave,
+  MdVerticalAlignBottom,
+  MdRefresh,
+  MdFunctions,
+  MdCompareArrows,
+  MdPlaylistAddCheck,
+  MdAdd, // to be reviewed
+  MdEdit, // to be reviewed
+  MdSubject,
+  MdViewHeadline,
+  MdAssistant,
+  MdSettingsEthernet,
+  MdLink,
+  MdWindow,
+  MdReviews,
+  MdCalculate,
+  MdRocketLaunch,
+  MdOutlineDataset,
+  MdVerified,
+  MdQueryStats,
+  MdFilterCenterFocus,
+  MdOutlineDescription,
+  MdQuestionAnswer,
+  MdUnfoldLess,
+  MdUnfoldMore,
+} from 'react-icons/md/index.js';
+
+export const ManageSearchIcon = MdManageSearch; // to be reviewed
+export const PencilIcon = MdModeEdit;
+export const StringTypeIcon = MdTextFields;
+export const MoreVerticalIcon = MdMoreVert;
+export const MoreHorizontalIcon = MdMoreHoriz;
+export const WrapTextIcon = MdWrapText;
+export const SaveAsIcon = MdSaveAs;
+export const SaveCurrIcon = MdSave;
+export const VerticalAlignBottomIcon = MdVerticalAlignBottom;
+export const RefreshIcon = MdRefresh;
+export const SigmaIcon = MdFunctions;
+export const CompareIcon = MdCompareArrows;
+export const CheckListIcon = MdPlaylistAddCheck;
+export const AddIcon = MdAdd; // to be reviewed
+export const EditIcon = MdEdit; // to be reviewed
+export const SubjectIcon = MdSubject;
+export const ViewHeadlineIcon = MdViewHeadline;
+export const AssistantIcon = MdAssistant;
+export const SettingsEthernetIcon = MdSettingsEthernet;
+export const LinkIcon = MdLink;
+export const WindowIcon = MdWindow;
+export const ReviewIcon = MdReviews;
+export const CalculateIcon = MdCalculate;
+export const LaunchIcon = MdRocketLaunch;
+export const DatasetIcon = MdOutlineDataset;
+export const VerifiedIcon = MdVerified;
+export const QueryIcon = MdQueryStats;
+export const CenterFocusIcon = MdFilterCenterFocus;
+export const DescriptionIcon = MdOutlineDescription;
+export const QuestionAnswerIcon = MdQuestionAnswer;
+export const FoldIcon = MdUnfoldLess;
+export const UnfoldIcon = MdUnfoldMore;
+
+//======================================================= VSC =======================================================
+import {
+  VscError,
+  VscWarning,
+  VscWordWrap,
+  VscGoToFile,
+  VscClose,
+  VscRunAll,
+  VscRunErrors,
+  VscOpenPreview,
+  VscDiff,
+  VscRegex,
+  VscVersions,
+  VscCaseSensitive,
+  VscWholeWord,
+  VscReferences,
+  VscWand,
+  VscCollapseAll,
+  VscExpandAll,
+  VscJson,
+  VscTable,
+} from 'react-icons/vsc/index.js';
+
+export const ErrorIcon = VscError;
+export const WarningIcon = VscWarning;
+export const WordWrapIcon = VscWordWrap;
+export const GoToFileIcon = VscGoToFile;
+export const CloseIcon = VscClose;
+export const RunAllIcon = VscRunAll;
+export const RunErrorsIcon = VscRunErrors;
+export const OpenPreviewIcon = VscOpenPreview;
+export const DiffIcon = VscDiff;
+export const RegexIcon = VscRegex;
+export const VersionsIcon = VscVersions;
+export const CaseSensitiveIcon = VscCaseSensitive;
+export const WholeWordMatchIcon = VscWholeWord;
+export const ReferencesIcon = VscReferences;
+export const WandIcon = VscWand;
+export const CollapseTreeIcon = VscCollapseAll;
+export const ExpandTreeIcon = VscExpandAll;
+export const SerializeIcon = VscJson;
+export const TableIcon = VscTable;
+
+//======================================================= BS =======================================================
+import {
+  BsFillTriangleFill,
+  BsFillFileEarmarkSpreadsheetFill,
+  BsBoxSeam,
+  BsGripVertical,
+  BsAlignTop,
+  BsAlignMiddle,
+  BsAlignBottom,
+  BsAlignStart,
+  BsAlignCenter,
+  BsAlignEnd,
+  BsDistributeHorizontal,
+  BsDistributeVertical,
+  BsDatabaseFillLock,
+  BsDatabaseFillCheck,
+  BsChevronUp,
+  BsChevronDown,
+  BsChevronRight,
+  BsChevronLeft,
+  BsQuestionSquare,
+  BsQuestionSquareFill,
+  BsTextLeft,
+} from 'react-icons/bs/index.js';
+
+export const FilledTriangleIcon = BsFillTriangleFill;
+export const TabulatedDataFileIcon = BsFillFileEarmarkSpreadsheetFill;
+export const BundleIcon = BsBoxSeam;
+export const ThinVerticalDragHandleIcon = BsGripVertical;
+export const AlignTopIcon = BsAlignTop;
+export const AlignMiddleIcon = BsAlignMiddle;
+export const AlignBottomIcon = BsAlignBottom;
+export const AlignStartIcon = BsAlignStart;
+export const AlignCenterIcon = BsAlignCenter;
+export const AlignEndIcon = BsAlignEnd;
+export const DistributeHorizontalIcon = BsDistributeHorizontal;
+export const DistributeVerticalIcon = BsDistributeVertical;
+export const DataAccessIcon = BsDatabaseFillLock;
+export const DataReadyIcon = BsDatabaseFillCheck;
+export const ThinChevronUpIcon = BsChevronUp;
+export const ThinChevronDownIcon = BsChevronDown;
+export const ThinChevronRightIcon = BsChevronRight;
+export const ThinChevronLeftIcon = BsChevronLeft;
+export const QuestionSquareIcon = BsQuestionSquare;
+export const QuestionSquareFillIcon = BsQuestionSquareFill;
+export const GenericTextFileIcon = BsTextLeft;
 
 //======================================================= HI =======================================================
 import { HiCode } from '@react-icons/all-files/hi/HiCode.js';

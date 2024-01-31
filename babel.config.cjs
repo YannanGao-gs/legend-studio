@@ -32,6 +32,7 @@ module.exports = (api) => {
           useTypescript: true,
           useReact: true,
           useReactFastRefresh: true,
+          modules: false,
         },
       ],
     ],
