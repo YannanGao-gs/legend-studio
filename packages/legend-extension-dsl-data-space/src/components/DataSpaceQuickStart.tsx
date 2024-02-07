@@ -126,6 +126,7 @@ const DataSpaceExecutableTDSResultView = observer(
         );
       }
     };
+    // here
     const columnSpecifications = tdsResult.columns;
     const extractTDSExecutableActionConfigurations =
       applicationStore.pluginManager
@@ -169,6 +170,7 @@ const DataSpaceExecutableTDSResultView = observer(
                 Column Specifications
               </div>
             </button>
+            {/* here */}
             <button
               className={clsx(
                 'data-space__viewer__quickstart__item__content__tab',
