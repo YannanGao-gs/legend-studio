@@ -1010,6 +1010,9 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
   async initializeQueryBuilderState(
     stopWatch: StopWatch,
   ): Promise<QueryBuilderState> {
+    console.log(
+      '==============================here============================',
+    );
     const query = await this.graphManagerState.graphManager.getQuery(
       this.queryId,
       this.graphManagerState.graph,
