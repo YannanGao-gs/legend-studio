@@ -14,16 +14,29 @@
  * limitations under the License.
  */
 
-@forward 'application/fuzzy-search';
-@forward 'application/tab-manager';
-@forward 'application/activity-bar';
-@forward 'application/dynamic-favicon';
-@forward 'application/documentation-link';
+@use 'mixins' as *;
 
-// Reset (override library styles)
-@forward 'reset/monaco-editor';
-@forward 'code-editor';
+.dynamic-favicon__spinning {
+  animation: spin 1s linear infinite;
+}
 
-@forward 'data-grid';
+link[rel*='icon'] {
+  transition: all 0.5s ease;
 
-@forward 'graph-editor/packageable-element-option-label';
+  /* Adjust the duration and easing as needed */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Apply the animation to the canvas */
+canvas {
+  animation: spin 1s linear infinite;
+}

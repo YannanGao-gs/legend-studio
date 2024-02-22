@@ -85,6 +85,7 @@ type QueryBuilderDataGridConfig = {
 export class QueryBuilderResultState {
   readonly queryBuilderState: QueryBuilderState;
   readonly executionPlanState: ExecutionPlanState;
+  readonly exportState = ActionState.create();
 
   previewLimit = DEFAULT_LIMIT;
   pressedRunQuery = ActionState.create();
@@ -114,6 +115,7 @@ export class QueryBuilderResultState {
       mousedOverCell: observable,
       isRunningQuery: observable,
       isSelectingCells: observable,
+      exportState: observable,
       isQueryUsageViewerOpened: observable,
       gridConfig: observable,
       setGridConfig: action,
@@ -228,6 +230,30 @@ export class QueryBuilderResultState {
 
   *exportData(format: string): GeneratorFn<void> {
     try {
+      this.exportState.inProgress();
+      // const favicon: HTMLLinkElement | null =
+      //   document.querySelector("link[rel*='icon']") ||
+      //   document.createElement('link');
+      // const oldPath = favicon?.href ?? '.favicon.ico';
+      // if (favicon) {
+      // const canvas = document.createElement('canvas');
+      // canvas.width = 16;
+      // canvas.height = 16;
+
+      // const context = canvas.getContext('2d');
+      // if (context) {
+      //   context.beginPath();
+      //   context.arc(8, 8, 7, 0, 2 * Math.PI);
+      //   context.lineWidth = 2;
+      //   context.strokeStyle = '#3498db';
+      //   context.stroke();
+      // }
+      // favicon.type = 'image/x-icon';
+      // favicon.rel = 'shortcut icon';
+      // favicon.href = canvas.toDataURL('image/x-icon');
+
+      // document.head.appendChild(favicon);
+      // }
       this.queryBuilderState.applicationStore.notificationService.notifySuccess(
         `Export ${format} will run in background`,
       );
@@ -243,6 +269,7 @@ export class QueryBuilderResultState {
       QueryBuilderTelemetryHelper.logEvent_ExportQueryDataLaunched(
         this.queryBuilderState.applicationStore.telemetryService,
       );
+      yield new Promise((resolve) => setTimeout(resolve, 6000));
       const result =
         (yield this.queryBuilderState.graphManagerState.graphManager.exportData(
           query,
@@ -275,9 +302,15 @@ export class QueryBuilderResultState {
             this.queryBuilderState.applicationStore.telemetryService,
             reportWithState,
           );
+          this.exportState.pass();
+          // if (favicon) {
+          //   favicon.href = oldPath;
+          //   document.head.appendChild(favicon);
+          // }
         })
         .catch((error) => {
           assertErrorThrown(error);
+          this.exportState.fail();
           this.queryBuilderState.applicationStore.logService.error(
             LogEvent.create(GRAPH_MANAGER_EVENT.EXECUTION_FAILURE),
             error,

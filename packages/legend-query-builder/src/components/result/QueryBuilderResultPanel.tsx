@@ -54,7 +54,7 @@ import {
   useApplicationStore,
 } from '@finos/legend-application';
 import { prettyDuration } from '@finos/legend-shared';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QueryBuilderTDSState } from '../../stores/fetch-structure/tds/QueryBuilderTDSState.js';
 import { PARAMETER_SUBMIT_ACTION } from '../../stores/shared/LambdaParameterState.js';
 import { QUERY_BUILDER_TEST_ID } from '../../__lib__/QueryBuilderTesting.js';
@@ -64,7 +64,10 @@ import {
 } from '@finos/legend-lego/code-editor';
 import { ExecutionPlanViewer } from '../execution-plan/ExecutionPlanViewer.js';
 import { QueryUsageViewer } from '../QueryUsageViewer.js';
-import { DocumentationLink } from '@finos/legend-lego/application';
+import {
+  DocumentationLink,
+  DynamicFavicon,
+} from '@finos/legend-lego/application';
 import { QUERY_BUILDER_DOCUMENTATION_KEY } from '../../__lib__/QueryBuilderDocumentation.js';
 import { QueryBuilderTDSSimpleGridResult } from './tds/QueryBuilderTDSSimpleGridResult.js';
 import { getExecutedSqlFromExecutionResult } from './tds/QueryBuilderTDSResultShared.js';
@@ -295,6 +298,23 @@ export const QueryBuilderResultPanel = observer(
         !queryBuilderState.isLocalModeEnabled,
       );
     };
+
+    // useEffect(() => {
+    //   const favicon: HTMLLinkElement | null =
+    //     document.querySelector("link[rel~='icon']");
+    //   if (favicon) {
+    //     const oldPath = favicon.href;
+    //     console.log(oldPath);
+    //     if (resultState.exportState.isInProgress) {
+    //       favicon.href = 'https://stackoverflow.com/favicon.ico'; //`${favicon.href}?v=${new Date().getTime()}`;
+    //       document.head.appendChild(favicon);
+    //     } else {
+    //       console.log()
+    //       favicon.href = oldPath;
+    //       document.head.appendChild(favicon);
+    //     }
+    //   }
+    // }, [resultState.exportState.isInProgress]);
 
     return (
       <div
@@ -558,6 +578,7 @@ export const QueryBuilderResultPanel = observer(
         <ExecutionPlanViewer
           executionPlanState={resultState.executionPlanState}
         />
+        <DynamicFavicon spinning={resultState.exportState.isInProgress} />
       </div>
     );
   },
