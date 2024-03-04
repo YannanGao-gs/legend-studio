@@ -68,7 +68,7 @@ import {
   V1_buildGenerationConfigurationDescription,
   V1_buildParserError,
 } from './V1_EngineHelper.js';
-import { V1_LightQuery, V1_Query } from './query/V1_Query.js';
+import { V1_LightQuery, V1_PartialQuery, V1_Query } from './query/V1_Query.js';
 import {
   type V1_DatabaseBuilderInput,
   V1_serializeDatabaseBuilderInput,
@@ -1052,6 +1052,15 @@ export class V1_Engine {
       await this.engineServerClient.updateQuery(
         query.id,
         V1_Query.serialization.toJson(query),
+      ),
+    );
+  }
+
+  async patchQuery(query: V1_PartialQuery): Promise<V1_Query> {
+    return V1_Query.serialization.fromJson(
+      await this.engineServerClient.patchQuery(
+        query.id,
+        V1_PartialQuery.serialization.toJson(query),
       ),
     );
   }

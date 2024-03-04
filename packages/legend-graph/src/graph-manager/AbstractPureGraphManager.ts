@@ -59,7 +59,12 @@ import {
   type ServerClientConfig,
   type TracerService,
 } from '@finos/legend-shared';
-import type { LightQuery, Query, QueryInfo } from './action/query/Query.js';
+import type {
+  LightQuery,
+  PartialQuery,
+  Query,
+  QueryInfo,
+} from './action/query/Query.js';
 import type { EntitiesWithOrigin, Entity } from '@finos/legend-storage';
 import type { QuerySearchSpecification } from './action/query/QuerySearchSpecification.js';
 import type { ExternalFormatDescription } from './action/externalFormat/ExternalFormatDescription.js';
@@ -585,6 +590,10 @@ export abstract class AbstractPureGraphManager {
   abstract getQueryInfo(queryId: string): Promise<QueryInfo>;
   abstract createQuery(query: Query, graph: PureModel): Promise<Query>;
   abstract updateQuery(query: Query, graph: PureModel): Promise<Query>;
+  abstract updateQuerySelectedFields(
+    query: PartialQuery,
+    graph: PureModel,
+  ): Promise<Query>;
   abstract renameQuery(queryId: string, queryName: string): Promise<LightQuery>;
   abstract deleteQuery(queryId: string): Promise<LightQuery>;
 

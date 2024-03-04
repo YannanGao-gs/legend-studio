@@ -44,6 +44,7 @@ export class V1_Query {
   groupId!: string;
   artifactId!: string;
   versionId!: string;
+  originalVersionId?: string | undefined;
   mapping!: string;
   runtime!: string;
   content!: string;
@@ -72,6 +73,7 @@ export class V1_Query {
       ),
       taggedValues: optional(list(usingModelSchema(V1_taggedValueModelSchema))),
       versionId: primitive(),
+      originalVersionId: optional(primitive()),
     }),
     {
       deserializeNullAsUndefined: true,
@@ -86,6 +88,7 @@ export class V1_LightQuery {
   owner?: string | undefined;
   artifactId!: string;
   versionId!: string;
+  originalVersionId?: string | undefined;
   lastUpdatedAt?: number | undefined;
 
   static readonly serialization = new SerializationFactory(
@@ -97,9 +100,51 @@ export class V1_LightQuery {
       name: primitive(),
       owner: optional(primitive()),
       versionId: primitive(),
+      originalVersionId: optional(primitive()),
     }),
     {
       deserializeNullAsUndefined: true,
     },
+  );
+}
+
+// use V1_PartialQuery to update an existing query in DB with given attributes that are not null/undefined
+export class V1_PartialQuery {
+  name?: string | undefined;
+  id!: string;
+  groupId?: string | undefined;
+  artifactId?: string | undefined;
+  versionId?: string | undefined;
+  originalVersionId?: string | undefined;
+  mapping?: string | undefined;
+  runtime?: string | undefined;
+  content?: string | undefined;
+  owner?: string | undefined;
+  taggedValues?: V1_TaggedValue[] | undefined;
+  stereotypes?: V1_StereotypePtr[] | undefined;
+  defaultParameterValues?: V1_QueryParameterValue[] | undefined;
+  lastUpdatedAt?: number | undefined;
+
+  static readonly serialization = new SerializationFactory(
+    createModelSchema(V1_PartialQuery, {
+      artifactId: optional(primitive()),
+      content: optional(primitive()),
+      id: primitive(),
+      defaultParameterValues: optional(
+        list(usingModelSchema(V1_QueryParameterValue.serialization.schema)),
+      ),
+      groupId: optional(primitive()),
+      lastUpdatedAt: optional(primitive()),
+      mapping: optional(primitive()),
+      name: optional(primitive()),
+      owner: optional(primitive()),
+      runtime: optional(primitive()),
+      stereotypes: optional(
+        list(usingModelSchema(V1_stereotypePtrModelSchema)),
+      ),
+      taggedValues: optional(list(usingModelSchema(V1_taggedValueModelSchema))),
+      versionId: optional(primitive()),
+      originalVersionId: optional(primitive()),
+    }),
   );
 }

@@ -39,7 +39,11 @@ import type { V1_GenerationOutput } from './generation/V1_GenerationOutput.js';
 import type { V1_ExecuteInput } from './execution/V1_ExecuteInput.js';
 import type { V1_PureModelContext } from '../model/context/V1_PureModelContext.js';
 import type { V1_ExecutionPlan } from '../model/executionPlan/V1_ExecutionPlan.js';
-import type { V1_LightQuery, V1_Query } from './query/V1_Query.js';
+import type {
+  V1_LightQuery,
+  V1_PartialQuery,
+  V1_Query,
+} from './query/V1_Query.js';
 import type { V1_ServiceStorage } from './service/V1_ServiceStorage.js';
 import type { GenerationMode } from '../../../../../graph-manager/action/generation/GenerationConfigurationDescription.js';
 import type { V1_QuerySearchSpecification } from './query/V1_QuerySearchSpecification.js';
@@ -115,6 +119,7 @@ enum CORE_ENGINE_ACTIVITY_TRACE {
 
   CREATE_QUERY = 'create query',
   UPDATE_QUERY = 'update query',
+  PATCH_QUERY = 'patch query',
   DELETE_QUERY = 'delete query',
 
   CANCEL_USER_EXECUTIONS = 'cancel user executions',
@@ -768,6 +773,15 @@ export class V1_EngineServerClient extends AbstractServerClient {
     this.putWithTracing(
       this.getTraceData(CORE_ENGINE_ACTIVITY_TRACE.UPDATE_QUERY),
       this._query(queryId),
+      query,
+    );
+  patchQuery = (
+    queryId: string,
+    query: PlainObject<V1_PartialQuery>,
+  ): Promise<PlainObject<V1_Query>> =>
+    this.putWithTracing(
+      this.getTraceData(CORE_ENGINE_ACTIVITY_TRACE.PATCH_QUERY),
+      `${this._query(queryId)}/patchQuery`,
       query,
     );
   deleteQuery = (queryId: string): Promise<PlainObject<V1_Query>> =>
