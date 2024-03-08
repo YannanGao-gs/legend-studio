@@ -2974,10 +2974,7 @@ export class V1_PureGraphManager extends AbstractPureGraphManager {
     );
   }
 
-  async updateQuerySelectedFields(
-    query: PartialQuery,
-    graph: PureModel,
-  ): Promise<Query> {
+  async patchQuery(query: PartialQuery, graph: PureModel): Promise<Query> {
     return V1_buildQuery(
       await this.engine.patchQuery(V1_transformPartialQuery(query)),
       graph,

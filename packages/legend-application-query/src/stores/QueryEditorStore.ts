@@ -998,7 +998,7 @@ export class ExistingQueryUpdateState {
       newQuery.id = queryId;
       newQuery.versionId = queryVersionId;
       const updatedQuery =
-        (yield this.editorStore.graphManagerState.graphManager.updateQuerySelectedFields(
+        (yield this.editorStore.graphManagerState.graphManager.patchQuery(
           newQuery,
           this.editorStore.graphManagerState.graph,
         )) as Query;
