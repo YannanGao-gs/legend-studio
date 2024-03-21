@@ -187,7 +187,6 @@ import {
 import { V1_buildExecutionPlan } from './transformation/pureGraph/to/V1_ExecutionPlanBuilder.js';
 import type {
   LightQuery,
-  PartialQuery,
   Query,
   QueryInfo,
 } from '../../../../graph-manager/action/query/Query.js';
@@ -199,7 +198,6 @@ import {
   V1_buildLightQuery,
   V1_transformQuerySearchSpecification,
   V1_buildSourceInformation,
-  V1_transformPartialQuery,
 } from './engine/V1_EngineHelper.js';
 import { V1_buildExecutionResult } from './engine/execution/V1_ExecutionHelper.js';
 import {
@@ -2974,9 +2972,9 @@ export class V1_PureGraphManager extends AbstractPureGraphManager {
     );
   }
 
-  async patchQuery(query: PartialQuery, graph: PureModel): Promise<Query> {
+  async patchQuery(query: Partial<Query>, graph: PureModel): Promise<Query> {
     return V1_buildQuery(
-      await this.engine.patchQuery(V1_transformPartialQuery(query)),
+      await this.engine.patchQuery(V1_transformQuery(query)),
       graph,
       this.engine.getCurrentUserId(),
     );

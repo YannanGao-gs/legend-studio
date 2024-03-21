@@ -73,33 +73,6 @@ export class LightQuery {
   isCurrentUserQuery = false;
 }
 
-// use PartialQuery to update an existing query in DB with given attributes that are not null/undefined
-export class PartialQuery {
-  name?: string;
-  id!: string;
-  versionId?: string;
-  originalVersionId?: string;
-  groupId?: string;
-  artifactId?: string;
-  mapping?: PackageableElementReference<Mapping>;
-  runtime?: PackageableElementReference<PackageableRuntime>;
-  // We enforce a single owner, for collaboration on query, use Studio
-  // if not owner is specified, any user can own the query
-  // NOTE: the owner is managed automatically by the backend
-  owner?: string | undefined;
-  // NOTE: these are different from metamodel tagged values and stereotypes
-  // because we don't process them
-  taggedValues?: QueryTaggedValue[] | undefined;
-  stereotypes?: QueryStereotype[] | undefined;
-  defaultParameterValues?: QueryParameterValue[] | undefined;
-
-  // Store query in text to be more compact and stable
-  content?: string;
-
-  lastUpdatedAt?: number | undefined;
-  isCurrentUserQuery = false;
-}
-
 export const toLightQuery = (query: Query): LightQuery => {
   const lightQuery = new LightQuery();
   lightQuery.name = query.name;

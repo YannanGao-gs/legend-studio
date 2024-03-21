@@ -21,7 +21,6 @@ import {
 } from '@finos/legend-shared';
 import {
   LightQuery,
-  type PartialQuery,
   Query,
   QueryParameterValue,
   QueryStereotype,
@@ -31,7 +30,6 @@ import {
   type V1_LightQuery,
   V1_Query,
   V1_QueryParameterValue,
-  V1_PartialQuery,
 } from './query/V1_Query.js';
 import type { PureModel } from '../../../../../graph/PureModel.js';
 import { PackageableElementExplicitReference } from '../../../../../graph/metamodel/pure/packageableElements/PackageableElementReference.js';
@@ -206,58 +204,33 @@ export const V1_buildQuery = (
   return metamodel;
 };
 
-export const V1_transformQuery = (metamodel: Query): V1_Query => {
+export const V1_transformQuery = (metamodel: Partial<Query>): V1_Query => {
   const protocol = new V1_Query();
-  protocol.name = metamodel.name;
-  protocol.id = metamodel.id;
-  protocol.name = metamodel.name;
-  protocol.versionId = metamodel.versionId;
+  if (metamodel.name) {
+    protocol.name = metamodel.name;
+  }
+  if (metamodel.id) {
+    protocol.id = metamodel.id;
+  }
+  if (metamodel.versionId) {
+    protocol.versionId = metamodel.versionId;
+  }
+  if (metamodel.groupId) {
+    protocol.groupId = metamodel.groupId;
+  }
+  if (metamodel.artifactId) {
+    protocol.artifactId = metamodel.artifactId;
+  }
   protocol.originalVersionId = metamodel.originalVersionId;
-  protocol.groupId = metamodel.groupId;
-  protocol.artifactId = metamodel.artifactId;
-  protocol.mapping = metamodel.mapping.valueForSerialization ?? '';
-  protocol.runtime = metamodel.runtime.valueForSerialization ?? '';
-  protocol.content = metamodel.content;
-  protocol.owner = metamodel.owner;
-  protocol.taggedValues = metamodel.taggedValues?.map((_taggedValue) => {
-    const taggedValue = new V1_TaggedValue();
-    taggedValue.tag = new V1_TagPtr();
-    taggedValue.tag.profile = _taggedValue.profile;
-    taggedValue.tag.value = _taggedValue.tag;
-    taggedValue.value = _taggedValue.value;
-    return taggedValue;
-  });
-  protocol.defaultParameterValues = metamodel.defaultParameterValues?.map(
-    (_defaultParams) => {
-      const vDefault = new V1_QueryParameterValue();
-      vDefault.name = _defaultParams.name;
-      vDefault.content = _defaultParams.content;
-      return vDefault;
-    },
-  );
-  protocol.stereotypes = metamodel.stereotypes?.map((_stereotype) => {
-    const stereotype = new V1_StereotypePtr();
-    stereotype.profile = _stereotype.profile;
-    stereotype.value = _stereotype.stereotype;
-    return stereotype;
-  });
-  return protocol;
-};
-
-export const V1_transformPartialQuery = (
-  metamodel: PartialQuery,
-): V1_PartialQuery => {
-  const protocol = new V1_PartialQuery();
-  protocol.name = metamodel.name;
-  protocol.id = metamodel.id;
-  protocol.name = metamodel.name;
-  protocol.versionId = metamodel.versionId;
-  protocol.originalVersionId = metamodel.originalVersionId;
-  protocol.groupId = metamodel.groupId;
-  protocol.artifactId = metamodel.artifactId;
-  protocol.mapping = metamodel.mapping?.valueForSerialization;
-  protocol.runtime = metamodel.runtime?.valueForSerialization;
-  protocol.content = metamodel.content;
+  if (metamodel.mapping) {
+    protocol.mapping = metamodel.mapping.valueForSerialization ?? '';
+  }
+  if (metamodel.runtime) {
+    protocol.runtime = metamodel.runtime.valueForSerialization ?? '';
+  }
+  if (metamodel.content) {
+    protocol.content = metamodel.content;
+  }
   protocol.owner = metamodel.owner;
   protocol.taggedValues = metamodel.taggedValues?.map((_taggedValue) => {
     const taggedValue = new V1_TaggedValue();

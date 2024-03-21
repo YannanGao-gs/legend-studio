@@ -61,7 +61,6 @@ import {
   reportGraphAnalytics,
   cloneQueryStereotype,
   cloneQueryTaggedValue,
-  PartialQuery,
 } from '@finos/legend-graph';
 import {
   EXTERNAL_APPLICATION_NAVIGATION__generateStudioProjectViewUrl,
@@ -993,7 +992,7 @@ export class ExistingQueryUpdateState {
   ): GeneratorFn<void> {
     try {
       this.updateQueryState.inProgress();
-      const newQuery = new PartialQuery();
+      const newQuery = new Query();
       // since we only need to update version id, we just need to provide value for version id and keep others undefined/null
       newQuery.id = queryId;
       newQuery.versionId = queryVersionId;
