@@ -18,13 +18,14 @@ import packageJson from '../../../package.json' assert { type: 'json' };
 import {
   type QuerySetupActionConfiguration,
   type ExistingQueryEditorStateBuilder,
-  type ExistingQueryEditorStore,
+  ExistingQueryEditorStore,
   LegendQueryApplicationPlugin,
   LEGEND_QUERY_APP_EVENT,
   createViewProjectHandler,
   createViewSDLCProjectHandler,
+  type QueryEditorActionConfiguration,
 } from '@finos/legend-application-query';
-import { SquareIcon } from '@finos/legend-art';
+import { ArrowCircleUpIcon, SquareIcon } from '@finos/legend-art';
 import {
   ActionAlertActionType,
   ActionAlertType,
@@ -34,6 +35,7 @@ import {
   DATA_SPACE_QUERY_ROUTE_PATTERN,
   generateDataSpaceQueryCreatorRoute,
   generateDataSpaceQuerySetupRoute,
+  generateDataSpaceTemplateQueryPromotionRoute,
 } from '../../__lib__/query/DSL_DataSpace_LegendQueryNavigation.js';
 import { DataSpaceQueryCreator } from './DataSpaceQueryCreator.js';
 import {
@@ -54,6 +56,7 @@ import type { DataSpaceInfo } from '../../stores/query/DataSpaceInfo.js';
 import { getOwnDataSpace } from '../../graph-manager/DSL_DataSpace_GraphManagerHelper.js';
 import {
   assertErrorThrown,
+  buildUrl,
   guaranteeNonNullable,
   LogEvent,
 } from '@finos/legend-shared';
@@ -71,6 +74,7 @@ import type {
   DataSpaceExecutionContext,
 } from '../../graph/metamodel/pure/model/packageableElements/dataSpace/DSL_DataSpace_DataSpace.js';
 import { DataSpaceTemplateQueryCreator } from './DataSpaceTemplateQueryCreator.js';
+import { parseProjectIdentifier } from '@finos/legend-storage';
 
 const resolveExecutionContext = (
   dataSpace: DataSpace,
@@ -302,6 +306,93 @@ export class DSL_DataSpace_LegendQueryApplicationPlugin extends LegendQueryAppli
           return dataSpaceQueryBuilderState;
         }
         return undefined;
+      },
+    ];
+  }
+
+  override getExtraQueryEditorActionConfigurations(): QueryEditorActionConfiguration[] {
+    return [
+      {
+        key: 'promote-as-curated-template-query',
+        renderer: (editorStore, queryBuilderState) => {
+          const proceedCuratedTemplateQueryPromotion =
+            async (): Promise<void> => {
+              if (
+                !(
+                  editorStore instanceof ExistingQueryEditorStore &&
+                  queryBuilderState instanceof DataSpaceQueryBuilderState
+                )
+              ) {
+                return;
+              }
+              // fetch project data
+              const project = StoreProjectData.serialization.fromJson(
+                await editorStore.depotServerClient.getProject(
+                  editorStore.lightQuery.groupId,
+                  editorStore.lightQuery.artifactId,
+                ),
+              );
+
+              // find the matching SDLC instance
+              const projectIDPrefix = parseProjectIdentifier(
+                project.projectId,
+              ).prefix;
+              const matchingSDLCEntry =
+                editorStore.applicationStore.config.studioInstances.find(
+                  (entry) => entry.sdlcProjectIDPrefix === projectIDPrefix,
+                );
+              // if (matchingSDLCEntry) {
+              editorStore.applicationStore.navigationService.navigator.visitAddress(
+                buildUrl([
+                  editorStore.applicationStore.config.studioApplicationUrl,
+                  generateDataSpaceTemplateQueryPromotionRoute(
+                    editorStore.lightQuery.groupId,
+                    editorStore.lightQuery.artifactId,
+                    editorStore.lightQuery.versionId,
+                    queryBuilderState.dataSpace.path,
+                    editorStore.lightQuery.id,
+                  ),
+                ]),
+              );
+              // } else {
+              //   editorStore.applicationStore.notificationService.notifyWarning(
+              //     `Can't find the corresponding SDLC instance to productionize the query`,
+              //   );
+              // }
+            };
+
+          const proceed = (): void => {
+            queryBuilderState.changeDetectionState.alertUnsavedChanges(() => {
+              proceedCuratedTemplateQueryPromotion().catch(
+                editorStore.applicationStore.alertUnhandledError,
+              );
+            });
+          };
+
+          return (
+            <button
+              className="query-editor__header__action btn--dark"
+              tabIndex={-1}
+              onClick={proceed}
+              disabled={
+                !(
+                  editorStore instanceof ExistingQueryEditorStore &&
+                  queryBuilderState instanceof DataSpaceQueryBuilderState
+                )
+              }
+              title={
+                !(editorStore instanceof ExistingQueryEditorStore)
+                  ? 'Please save your query first before promoting'
+                  : 'Promote Curated Template query...'
+              }
+            >
+              <ArrowCircleUpIcon className="query-editor__header__action__icon--productionize" />
+              <div className="query-editor__header__action__label">
+                Promote as Template Query
+              </div>
+            </button>
+          );
+        },
       },
     ];
   }
