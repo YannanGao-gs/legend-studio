@@ -17,9 +17,10 @@
 import { type GenericLegendApplicationStore } from '@finos/legend-application';
 import {
   type QueryBuilderConfig,
-  QueryBuilderState,
   type QuerySDLC,
   type QueryBuilderWorkflowState,
+  type QueryBuilderActionConfig,
+  QueryBuilderState,
 } from '@finos/legend-query-builder';
 import {
   type GraphManagerState,
@@ -155,6 +156,7 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
     graphManagerState: GraphManagerState,
     depotServerClient: DepotServerClient,
     workflow: QueryBuilderWorkflowState,
+    actionConfig: QueryBuilderActionConfig,
     dataSpace: DataSpace,
     executionContext: DataSpaceExecutionContext,
     onDataSpaceChange: (val: DataSpaceInfo) => void,
@@ -169,7 +171,14 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
     config?: QueryBuilderConfig | undefined,
     sourceInfo?: QuerySDLC | undefined,
   ) {
-    super(applicationStore, graphManagerState, workflow, config, sourceInfo);
+    super(
+      applicationStore,
+      graphManagerState,
+      workflow,
+      actionConfig,
+      config,
+      sourceInfo,
+    );
 
     makeObservable(this, {
       dataSpaces: observable,

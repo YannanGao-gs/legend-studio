@@ -75,6 +75,13 @@ export type TemplateQueryPanelContentRenderer = (
   queryBuilderState: QueryBuilderState,
 ) => React.ReactNode;
 
+export type QueryBuilderHeaderActionConfiguration = {
+  key: string;
+  renderer: (
+    queryBuilderState: QueryBuilderState,
+  ) => React.ReactNode | undefined;
+};
+
 export interface QueryBuilder_LegendApplicationPlugin_Extension
   extends LegendApplicationPlugin {
   /**
@@ -118,4 +125,15 @@ export interface QueryBuilder_LegendApplicationPlugin_Extension
    * Get the list of template query panel content render
    */
   getExtraTemplateQueryPanelContentRenderer?(): TemplateQueryPanelContentRenderer[];
+
+  /**
+   * Get the list of action configurations
+   */
+  getExtraQueryBuilderHeaderActionConfigurations?(): QueryBuilderHeaderActionConfiguration[];
+
+  // rethink next week,,,just wanna get query title :)
+  /**
+   * Get the list of action configurations
+   */
+  getExtraQueryBuilderHeaderTitleConfigurations?(): QueryBuilderHeaderActionConfiguration[];
 }

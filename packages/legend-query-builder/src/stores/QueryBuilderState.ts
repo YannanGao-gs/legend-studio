@@ -124,6 +124,10 @@ export enum QUERY_BUILDER_LAMBDA_WRITER_MODE {
   TYPED_FETCH_STRUCTURE = 'TYPED_FETCH_STRUCTURE',
 }
 
+export class QueryBuilderActionConfig {
+  static INSTANCE = new QueryBuilderActionConfig();
+}
+
 export abstract class QueryBuilderState implements CommandRegistrar {
   readonly applicationStore: GenericLegendApplicationStore;
   readonly graphManagerState: GraphManagerState;
@@ -133,6 +137,7 @@ export abstract class QueryBuilderState implements CommandRegistrar {
   readonly observerContext: ObserverContext;
   readonly config: QueryBuilderConfig | undefined;
   readonly workflowState: QueryBuilderWorkflowState;
+  readonly actionConfig: QueryBuilderActionConfig;
 
   explorerState: QueryBuilderExplorerState;
   functionsExplorerState: QueryFunctionsExplorerState;
@@ -178,6 +183,7 @@ export abstract class QueryBuilderState implements CommandRegistrar {
     applicationStore: GenericLegendApplicationStore,
     graphManagerState: GraphManagerState,
     workflowState: QueryBuilderWorkflowState,
+    actionConfig: QueryBuilderActionConfig,
     config: QueryBuilderConfig | undefined,
     sourceInfo?: QuerySDLC | undefined,
   ) {
@@ -259,6 +265,7 @@ export abstract class QueryBuilderState implements CommandRegistrar {
     this.config = config;
 
     this.workflowState = workflowState;
+    this.actionConfig = actionConfig;
     this.sourceInfo = sourceInfo;
   }
 
@@ -816,6 +823,7 @@ export abstract class QueryBuilderState implements CommandRegistrar {
       this.applicationStore,
       this.graphManagerState,
       this.workflowState,
+      this.actionConfig,
       undefined,
     );
     basicState.class = this.class;

@@ -32,7 +32,10 @@ import {
 } from '@finos/legend-shared';
 import { action, makeObservable, observable } from 'mobx';
 import { renderServiceQueryBuilderSetupPanelContent } from '../../components/workflows/ServiceQueryBuilder.js';
-import { QueryBuilderState } from '../QueryBuilderState.js';
+import {
+  type QueryBuilderActionConfig,
+  QueryBuilderState,
+} from '../QueryBuilderState.js';
 import type { QueryBuilderConfig } from '../../graph-manager/QueryBuilderConfig.js';
 import type { QueryBuilderWorkflowState } from '../query-workflow/QueryBuilderWorkFlowState.js';
 
@@ -60,6 +63,7 @@ export class ServiceQueryBuilderState extends QueryBuilderState {
     applicationStore: GenericLegendApplicationStore,
     graphManagerState: GraphManagerState,
     workflowState: QueryBuilderWorkflowState,
+    actionConfig: QueryBuilderActionConfig,
     service: Service,
     usableServices: Service[] | undefined,
     executionContextKey?: string | undefined,
@@ -74,6 +78,7 @@ export class ServiceQueryBuilderState extends QueryBuilderState {
       applicationStore,
       graphManagerState,
       workflowState,
+      actionConfig,
       config,
       sourceInfo,
     );

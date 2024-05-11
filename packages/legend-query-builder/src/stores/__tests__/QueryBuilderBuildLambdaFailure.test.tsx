@@ -35,7 +35,10 @@ import {
 } from '@finos/legend-graph/test';
 import { QueryBuilder_GraphManagerPreset } from '../../graph-manager/QueryBuilder_GraphManagerPreset.js';
 import { ApplicationStore } from '@finos/legend-application';
-import { INTERNAL__BasicQueryBuilderState } from '../QueryBuilderState.js';
+import {
+  INTERNAL__BasicQueryBuilderState,
+  QueryBuilderActionConfig,
+} from '../QueryBuilderState.js';
 import { act } from 'react-dom/test-utils';
 import {
   TEST__LegendApplicationPluginManager,
@@ -161,6 +164,7 @@ describe(
           applicationStore,
           graphManagerState,
           QueryBuilderAdvancedWorkflowState.INSTANCE,
+          QueryBuilderActionConfig.INSTANCE,
           undefined,
         );
         await act(async () => {

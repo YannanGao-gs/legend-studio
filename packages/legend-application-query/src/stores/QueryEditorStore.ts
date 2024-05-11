@@ -106,6 +106,7 @@ import {
   ServiceQueryBuilderState,
   QueryLoaderState,
   QueryBuilderDataBrowserWorkflow,
+  QueryBuilderActionConfig,
 } from '@finos/legend-query-builder';
 import { LegendQueryUserDataHelper } from '../__lib__/LegendQueryUserDataHelper.js';
 import { LegendQueryTelemetryHelper } from '../__lib__/LegendQueryTelemetryHelper.js';
@@ -654,6 +655,15 @@ export abstract class QueryEditorStore {
   }
 }
 
+export class QueryBuilderActionConfig_QueryApplication extends QueryBuilderActionConfig {
+  editorStore: QueryEditorStore;
+
+  constructor(editorStore: QueryEditorStore) {
+    super();
+    this.editorStore = editorStore;
+  }
+}
+
 export class MappingQueryCreatorStore extends QueryEditorStore {
   readonly groupId: string;
   readonly artifactId: string;
@@ -698,6 +708,7 @@ export class MappingQueryCreatorStore extends QueryEditorStore {
       this.applicationStore,
       this.graphManagerState,
       QueryBuilderDataBrowserWorkflow.INSTANCE,
+      new QueryBuilderActionConfig_QueryApplication(this),
       (val: Mapping) => {
         this.applicationStore.navigationService.navigator.updateCurrentLocation(
           generateMappingQueryCreatorRoute(
@@ -807,6 +818,7 @@ export class ServiceQueryCreatorStore extends QueryEditorStore {
       this.applicationStore,
       this.graphManagerState,
       QueryBuilderDataBrowserWorkflow.INSTANCE,
+      new QueryBuilderActionConfig_QueryApplication(this),
       service,
       this.graphManagerState.usableServices,
       this.executionKey,
@@ -1215,11 +1227,13 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
           versionId: projectInfo.versionId,
           dataSpace: dataSpace.path,
         };
+        //here
         const dataSpaceQueryBuilderState = new DataSpaceQueryBuilderState(
           this.applicationStore,
           this.graphManagerState,
           this.depotServerClient,
           QueryBuilderDataBrowserWorkflow.INSTANCE,
+          new QueryBuilderActionConfig_QueryApplication(this),
           dataSpace,
           matchingExecutionContext,
           (dataSpaceInfo: DataSpaceInfo) => {
@@ -1329,6 +1343,7 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
         this.applicationStore,
         this.graphManagerState,
         QueryBuilderDataBrowserWorkflow.INSTANCE,
+        new QueryBuilderActionConfig_QueryApplication(this),
         this.applicationStore.config.options.queryBuilderConfig,
         sourceInfo,
       );

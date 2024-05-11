@@ -93,7 +93,10 @@ import {
   TEST_DATA__lambda_postFilterWithRightValAsColEnums,
   TEST_DATA_lambda__postFilterOnAggregatedColWithDerivation,
 } from './TEST_DATA__QueryBuilder_Roundtrip_TestPostFilterQueries.js';
-import { INTERNAL__BasicQueryBuilderState } from '../QueryBuilderState.js';
+import {
+  INTERNAL__BasicQueryBuilderState,
+  QueryBuilderActionConfig,
+} from '../QueryBuilderState.js';
 import {
   TEST_DATA__OlapGroupBy_entities,
   TEST_DATA__lambda_olapGroupBy_MultiStackedGroupBy,
@@ -793,6 +796,7 @@ describe(
           applicationStore,
           graphManagerState,
           QueryBuilderAdvancedWorkflowState.INSTANCE,
+          QueryBuilderActionConfig.INSTANCE,
           undefined,
         );
         // do the check using input and output lambda
@@ -836,6 +840,7 @@ test(
       applicationStore,
       graphManagerState,
       QueryBuilderAdvancedWorkflowState.INSTANCE,
+      QueryBuilderActionConfig.INSTANCE,
       undefined,
     );
     queryBuilderState.resultState.setPreviewLimit(DEFAULT_LIMIT);

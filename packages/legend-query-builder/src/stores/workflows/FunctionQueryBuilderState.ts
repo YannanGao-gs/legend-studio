@@ -22,6 +22,7 @@ import type {
 import { ClassQueryBuilderState } from './ClassQueryBuilderState.js';
 import type { QueryBuilderConfig } from '../../graph-manager/QueryBuilderConfig.js';
 import type { QueryBuilderWorkflowState } from '../query-workflow/QueryBuilderWorkFlowState.js';
+import type { QueryBuilderActionConfig } from '../QueryBuilderState.js';
 
 // Note: We may want to move it to extend QueryBuilderState directly
 // but for now we will use the same setup as class as class, mapping, runtime are editable
@@ -32,10 +33,17 @@ export class FunctionQueryBuilderState extends ClassQueryBuilderState {
     applicationStore: GenericLegendApplicationStore,
     graphManagerState: GraphManagerState,
     workflowState: QueryBuilderWorkflowState,
+    actionConfig: QueryBuilderActionConfig,
     functionElemenet: ConcreteFunctionDefinition,
     config: QueryBuilderConfig | undefined,
   ) {
-    super(applicationStore, graphManagerState, workflowState, config);
+    super(
+      applicationStore,
+      graphManagerState,
+      workflowState,
+      actionConfig,
+      config,
+    );
     this.functionElement = functionElemenet;
     this.showParametersPanel = true;
   }

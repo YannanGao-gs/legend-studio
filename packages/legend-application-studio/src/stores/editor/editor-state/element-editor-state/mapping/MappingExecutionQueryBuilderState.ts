@@ -19,6 +19,7 @@ import {
   type QueryBuilderConfig,
   QueryBuilderState,
   QueryBuilderAdvancedWorkflowState,
+  QueryBuilderActionConfig,
 } from '@finos/legend-query-builder';
 import type { GraphManagerState, Mapping } from '@finos/legend-graph';
 import { renderMappingExecutionQueryBuilderSetupPanelContent } from '../../../../../components/editor/editor-group/mapping-editor/MappingExecutionQueryBuilder.js';
@@ -40,6 +41,7 @@ export class MappingExecutionQueryBuilderState extends QueryBuilderState {
       applicationStore,
       graphManagerState,
       QueryBuilderAdvancedWorkflowState.INSTANCE,
+      QueryBuilderActionConfig.INSTANCE,
       config,
       sourceInfo,
     );

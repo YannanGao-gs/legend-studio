@@ -16,14 +16,19 @@
 
 import { LegendApplicationPlugin } from '@finos/legend-application';
 import type { Query } from '@finos/legend-graph';
-import type { QueryBuilderState } from '@finos/legend-query-builder';
-import type React from 'react';
-import type { LegendQueryPluginManager } from '../application/LegendQueryPluginManager.js';
 import type {
-  ExistingQueryEditorStore,
-  QueryEditorStore,
+  QueryBuilderHeaderActionConfiguration,
+  QueryBuilderState,
+  QueryBuilder_LegendApplicationPlugin_Extension,
+} from '@finos/legend-query-builder';
+import type { LegendQueryPluginManager } from '../application/LegendQueryPluginManager.js';
+import {
+  QueryBuilderActionConfig_QueryApplication,
+  type ExistingQueryEditorStore,
+  type QueryEditorStore,
 } from './QueryEditorStore.js';
 import type { QuerySetupLandingPageStore } from './QuerySetupStore.js';
+import { Button, ManageSearchIcon } from '@finos/legend-art';
 
 export enum QuerySetupActionTag {
   PRODUCTIONIZATION = 'Productionization',
@@ -77,7 +82,10 @@ export type QueryEditorHelpMenuActionConfiguration = {
   icon?: React.ReactNode;
 };
 
-export abstract class LegendQueryApplicationPlugin extends LegendApplicationPlugin {
+export class LegendQueryApplicationPlugin
+  extends LegendApplicationPlugin
+  implements QueryBuilder_LegendApplicationPlugin_Extension
+{
   /**
    * This helps to better type-check for this empty abtract type
    * See https://github.com/finos/legend-studio/blob/master/docs/technical/typescript-usage.md#understand-typescript-structual-type-system

@@ -30,6 +30,7 @@ import {
   type QueryBuilderState,
   ClassQueryBuilderState,
   QueryBuilderAdvancedWorkflowState,
+  QueryBuilderActionConfig,
 } from '@finos/legend-query-builder';
 import {
   assertErrorThrown,
@@ -381,6 +382,7 @@ export const queryClass = async (
           embeddedQueryBuilderState.editorStore.applicationStore,
           embeddedQueryBuilderState.editorStore.graphManagerState,
           QueryBuilderAdvancedWorkflowState.INSTANCE,
+          QueryBuilderActionConfig.INSTANCE,
           editorStore.applicationStore.config.options.queryBuilderConfig,
           editorStore.editorMode.getSourceInfo(),
         );

@@ -42,6 +42,7 @@ import { QueryBuilder } from '../QueryBuilder.js';
 import {
   type QueryBuilderState,
   INTERNAL__BasicQueryBuilderState,
+  QueryBuilderActionConfig,
 } from '../../stores/QueryBuilderState.js';
 import { QueryBuilder_GraphManagerPreset } from '../../graph-manager/QueryBuilder_GraphManagerPreset.js';
 import { QUERY_BUILDER_TEST_ID } from '../../__lib__/QueryBuilderTesting.js';
@@ -200,6 +201,7 @@ export const TEST__setUpQueryBuilder = async (
     MOCK__applicationStore,
     graphManagerState,
     QueryBuilderAdvancedWorkflowState.INSTANCE,
+    QueryBuilderActionConfig.INSTANCE,
     undefined,
   );
   const mapping = graphManagerState.graph.getMapping(mappingPath);

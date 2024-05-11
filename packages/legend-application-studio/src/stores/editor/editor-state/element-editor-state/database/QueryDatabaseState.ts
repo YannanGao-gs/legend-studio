@@ -36,6 +36,7 @@ import {
 import { action, flow, flowResult, makeObservable, observable } from 'mobx';
 import type { Entity } from '@finos/legend-storage';
 import {
+  QueryBuilderActionConfig,
   QueryBuilderAdvancedWorkflowState,
   QueryBuilderConfig,
   QueryBuilderState,
@@ -93,6 +94,7 @@ export class IsolatedDatabaseBuilderState extends QueryBuilderState {
       applicationStore,
       isolatedGraphManagerState,
       QueryBuilderAdvancedWorkflowState.INSTANCE,
+      QueryBuilderActionConfig.INSTANCE,
       config,
     );
     makeObservable(this, {

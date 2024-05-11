@@ -39,6 +39,7 @@ import { flowResult } from 'mobx';
 import { QueryBuilder_GraphManagerPreset } from '../../graph-manager/QueryBuilder_GraphManagerPreset.js';
 import {
   INTERNAL__BasicQueryBuilderState,
+  QueryBuilderActionConfig,
   type QueryBuilderState,
 } from '../QueryBuilderState.js';
 import { QueryBuilderAdvancedWorkflowState } from '../query-workflow/QueryBuilderWorkFlowState.js';
@@ -133,6 +134,7 @@ export const TEST__setUpQueryBuilderState = async (
     applicationStore,
     graphManagerState,
     QueryBuilderAdvancedWorkflowState.INSTANCE,
+    QueryBuilderActionConfig.INSTANCE,
     undefined,
   );
   if (rawLambda) {

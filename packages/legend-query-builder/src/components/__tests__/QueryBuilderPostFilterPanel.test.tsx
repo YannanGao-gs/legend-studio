@@ -77,7 +77,10 @@ import {
   TEST__buildGraphWithEntities,
   TEST__getTestGraphManagerState,
 } from '@finos/legend-graph/test';
-import { INTERNAL__BasicQueryBuilderState } from '../../stores/QueryBuilderState.js';
+import {
+  INTERNAL__BasicQueryBuilderState,
+  QueryBuilderActionConfig,
+} from '../../stores/QueryBuilderState.js';
 import { QueryBuilderAdvancedWorkflowState } from '../../stores/query-workflow/QueryBuilderWorkFlowState.js';
 
 test(
@@ -679,6 +682,7 @@ test(
       applicationStore,
       graphManagerState,
       QueryBuilderAdvancedWorkflowState.INSTANCE,
+      QueryBuilderActionConfig.INSTANCE,
       undefined,
     );
     // do the check using input and output lambda

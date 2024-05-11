@@ -37,6 +37,7 @@ import {
   type QueryBuilderState,
   ServiceQueryBuilderState,
   type QueryBuilderWorkflowState,
+  QueryBuilderActionConfig,
 } from '@finos/legend-query-builder';
 import {
   type DepotServerClient,
@@ -158,8 +159,10 @@ export abstract class ServiceQueryEditorStore extends EditorStore {
 
   abstract fetchServiceInformation(): Promise<ProjectServiceCoordinates>;
 
+  //here
   *initializeWithServiceQuery(
     workflow: QueryBuilderWorkflowState,
+    actionConfig: QueryBuilderActionConfig,
   ): GeneratorFn<void> {
     try {
       const serviceInfo =
@@ -189,6 +192,7 @@ export abstract class ServiceQueryEditorStore extends EditorStore {
         this.applicationStore,
         this.graphManagerState,
         workflow,
+        actionConfig,
         this.service,
         undefined,
         undefined,
