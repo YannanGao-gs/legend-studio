@@ -80,10 +80,11 @@ import { QUERY_BUILDER_SETTING_KEY } from '../__lib__/QueryBuilderSetting.js';
 import { QUERY_BUILDER_COMPONENT_ELEMENT_ID } from './QueryBuilderComponentElement.js';
 import { DataAccessOverview } from './data-access/DataAccessOverview.js';
 import { QueryChat } from './QueryChat.js';
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { RedoButton, UndoButton } from '@finos/legend-lego/application';
 import { FETCH_STRUCTURE_IMPLEMENTATION } from '../stores/fetch-structure/QueryBuilderFetchStructureImplementationState.js';
 import { onChangeFetchStructureImplementation } from '../stores/fetch-structure/QueryBuilderFetchStructureState.js';
+import type { QueryBuilder_LegendApplicationPlugin_Extension } from '../stores/QueryBuilder_LegendApplicationPlugin_Extension.js';
 
 const QueryBuilderPostGraphFetchPanel = observer(
   (props: { graphFetchState: QueryBuilderGraphFetchTreeState }) => {
@@ -457,7 +458,10 @@ export const QueryBuilder = observer(
             isLoading={queryBuilderState.resultState.exportState.isInProgress}
           />
           <div className="query-builder__content">
-            <div className="query-builder__header">
+            <div
+              data-testid={QUERY_BUILDER_TEST_ID.QUERY_BUILDER_ACTIONS}
+              className="query-builder__header"
+            >
               <div className="query-builder__header__statuses">
                 {queryBuilderState.watermarkState.value && (
                   <button
@@ -483,6 +487,19 @@ export const QueryBuilder = observer(
                     queryBuilderState={queryBuilderState}
                   />
                 )}
+                {applicationStore.pluginManager
+                  .getApplicationPlugins()
+                  .flatMap(
+                    (plugin) =>
+                      (
+                        plugin as QueryBuilder_LegendApplicationPlugin_Extension
+                      ).getExtraQueryBuilderHeaderTitleConfigurations?.() ?? [],
+                  )
+                  .map((actionConfig) => (
+                    <Fragment key={actionConfig.key}>
+                      {actionConfig.renderer(queryBuilderState)}
+                    </Fragment>
+                  ))}
               </div>
               <div className="query-builder__header__actions">
                 <div className="query-builder__header__actions__undo-redo">
@@ -503,6 +520,21 @@ export const QueryBuilder = observer(
                     redo={redo}
                   />
                 </div>
+                {applicationStore.pluginManager
+                  .getApplicationPlugins()
+                  .flatMap(
+                    (plugin) =>
+                      (
+                        plugin as QueryBuilder_LegendApplicationPlugin_Extension
+                      ).getExtraQueryBuilderHeaderActionConfigurations?.() ??
+                      [],
+                  )
+                  .sort((A, B) => B.category - A.category)
+                  .map((actionConfig) => (
+                    <Fragment key={actionConfig.key}>
+                      {actionConfig.renderer(queryBuilderState)}
+                    </Fragment>
+                  ))}
                 <DropdownMenu
                   className="query-builder__header__advanced-dropdown"
                   title="Show Advanced Menu..."

@@ -16,9 +16,9 @@
 
 import packageJson from '../../../package.json' assert { type: 'json' };
 import {
-  type QueryEditorActionConfiguration,
   LegendQueryApplicationPlugin,
   ExistingQueryEditorStore,
+  QueryBuilderActionConfig_QueryApplication,
 } from '@finos/legend-application-query';
 import { ArrowCircleUpIcon } from '@finos/legend-art';
 import { generateQueryProductionizerRoute } from '../../__lib__/studio/DSL_Service_LegendStudioNavigation.js';
@@ -26,88 +26,107 @@ import { StoreProjectData } from '@finos/legend-server-depot';
 import { parseProjectIdentifier } from '@finos/legend-storage';
 import { buildUrl } from '@finos/legend-shared';
 import { ServiceRegisterAction } from './ServiceRegisterModal.js';
+import type { QueryBuilderHeaderActionConfiguration } from '@finos/legend-query-builder';
 
 export class DSL_Service_LegendQueryApplicationPlugin extends LegendQueryApplicationPlugin {
   constructor() {
     super(packageJson.extensions.applicationQueryPlugin, packageJson.version);
   }
 
-  override getExtraQueryEditorActionConfigurations(): QueryEditorActionConfiguration[] {
+  getExtraQueryBuilderHeaderActionConfigurations(): QueryBuilderHeaderActionConfiguration[] {
     return [
       {
         key: 'productionize-query',
-        renderer: (editorStore, queryBuilderState) => {
-          const openQueryProductionizer = async (): Promise<void> => {
-            if (!(editorStore instanceof ExistingQueryEditorStore)) {
-              return;
-            }
-            // fetch project data
-            const project = StoreProjectData.serialization.fromJson(
-              await editorStore.depotServerClient.getProject(
-                editorStore.lightQuery.groupId,
-                editorStore.lightQuery.artifactId,
-              ),
-            );
-
-            // find the matching SDLC instance
-            const projectIDPrefix = parseProjectIdentifier(
-              project.projectId,
-            ).prefix;
-            const matchingSDLCEntry =
-              editorStore.applicationStore.config.studioInstances.find(
-                (entry) => entry.sdlcProjectIDPrefix === projectIDPrefix,
-              );
-            if (matchingSDLCEntry) {
-              editorStore.applicationStore.navigationService.navigator.goToAddress(
-                buildUrl([
-                  editorStore.applicationStore.config.studioApplicationUrl,
-                  generateQueryProductionizerRoute(editorStore.lightQuery.id),
-                ]),
-                { ignoreBlocking: true },
-              );
-            } else {
-              editorStore.applicationStore.notificationService.notifyWarning(
-                `Can't find the corresponding SDLC instance to productionize the query`,
-              );
-            }
-          };
-
-          const proceed = (): void => {
-            queryBuilderState.changeDetectionState.alertUnsavedChanges(() => {
-              openQueryProductionizer().catch(
-                editorStore.applicationStore.alertUnhandledError,
-              );
-            });
-          };
-
-          return (
-            <button
-              className="query-editor__header__action btn--dark"
-              tabIndex={-1}
-              onClick={proceed}
-              disabled={!(editorStore instanceof ExistingQueryEditorStore)}
-              title={
-                !(editorStore instanceof ExistingQueryEditorStore)
-                  ? 'Please save your query first before productionizing'
-                  : 'Productionize query...'
+        category: 1,
+        renderer: (queryBuilderState): React.ReactNode => {
+          if (
+            queryBuilderState.actionConfig instanceof
+            QueryBuilderActionConfig_QueryApplication
+          ) {
+            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const openQueryProductionizer = async (): Promise<void> => {
+              if (!(editorStore instanceof ExistingQueryEditorStore)) {
+                return;
               }
-            >
-              <ArrowCircleUpIcon className="query-editor__header__action__icon--productionize" />
-              <div className="query-editor__header__action__label">
-                Productionize Query
-              </div>
-            </button>
-          );
+              // fetch project data
+              const project = StoreProjectData.serialization.fromJson(
+                await editorStore.depotServerClient.getProject(
+                  editorStore.lightQuery.groupId,
+                  editorStore.lightQuery.artifactId,
+                ),
+              );
+
+              // find the matching SDLC instance
+              const projectIDPrefix = parseProjectIdentifier(
+                project.projectId,
+              ).prefix;
+              const matchingSDLCEntry =
+                editorStore.applicationStore.config.studioInstances.find(
+                  (entry) => entry.sdlcProjectIDPrefix === projectIDPrefix,
+                );
+              if (matchingSDLCEntry) {
+                editorStore.applicationStore.navigationService.navigator.goToAddress(
+                  buildUrl([
+                    editorStore.applicationStore.config.studioApplicationUrl,
+                    generateQueryProductionizerRoute(editorStore.lightQuery.id),
+                  ]),
+                  { ignoreBlocking: true },
+                );
+              } else {
+                editorStore.applicationStore.notificationService.notifyWarning(
+                  `Can't find the corresponding SDLC instance to productionize the query`,
+                );
+              }
+            };
+
+            const proceed = (): void => {
+              queryBuilderState.changeDetectionState.alertUnsavedChanges(() => {
+                openQueryProductionizer().catch(
+                  editorStore.applicationStore.alertUnhandledError,
+                );
+              });
+            };
+
+            return (
+              <button
+                className="query-editor__header__action btn--dark"
+                tabIndex={-1}
+                onClick={proceed}
+                disabled={!(editorStore instanceof ExistingQueryEditorStore)}
+                title={
+                  !(editorStore instanceof ExistingQueryEditorStore)
+                    ? 'Please save your query first before productionizing'
+                    : 'Productionize query...'
+                }
+              >
+                <ArrowCircleUpIcon className="query-editor__header__action__icon--productionize" />
+                <div className="query-editor__header__action__label">
+                  Productionize Query
+                </div>
+              </button>
+            );
+          }
+          return undefined;
         },
       },
       {
         key: 'register-service',
-        renderer: (editorStore, queryBuilderState) => (
-          <ServiceRegisterAction
-            editorStore={editorStore}
-            queryBuilderState={queryBuilderState}
-          />
-        ),
+        category: 1,
+        renderer: (queryBuilderState): React.ReactNode => {
+          if (
+            queryBuilderState.actionConfig instanceof
+            QueryBuilderActionConfig_QueryApplication
+          ) {
+            const editorStore = queryBuilderState.actionConfig.editorStore;
+            return (
+              <ServiceRegisterAction
+                editorStore={editorStore}
+                queryBuilderState={queryBuilderState}
+              />
+            );
+          }
+          return undefined;
+        },
       },
     ];
   }

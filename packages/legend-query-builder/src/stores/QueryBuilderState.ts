@@ -124,6 +124,10 @@ export enum QUERY_BUILDER_LAMBDA_WRITER_MODE {
   TYPED_FETCH_STRUCTURE = 'TYPED_FETCH_STRUCTURE',
 }
 
+export class QueryBuilderActionConfig {
+  static INSTANCE = new QueryBuilderActionConfig();
+}
+
 export abstract class QueryBuilderState implements CommandRegistrar {
   readonly applicationStore: GenericLegendApplicationStore;
   readonly graphManagerState: GraphManagerState;
@@ -158,6 +162,7 @@ export abstract class QueryBuilderState implements CommandRegistrar {
   isLocalModeEnabled = false;
 
   lambdaWriteMode = QUERY_BUILDER_LAMBDA_WRITER_MODE.STANDARD;
+  actionConfig = QueryBuilderActionConfig.INSTANCE;
 
   class?: Class | undefined;
   getAllFunction: QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS =

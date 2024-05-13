@@ -43,7 +43,6 @@ import {
   TEST_DATA__modelCoverageAnalysisResult,
   TEST_DATA__simpleProjectionQuery,
 } from './TEST_DATA__QueryBuilder_ResultStateTest.js';
-import { QUERY_EDITOR_TEST_ID } from '../../__lib__/LegendQueryTesting.js';
 
 test(
   integrationTest(
@@ -93,10 +92,10 @@ test(
     });
 
     await waitFor(() =>
-      renderResult.getByTestId(QUERY_EDITOR_TEST_ID.QUERY_EDITOR_ACTIONS),
+      renderResult.getByTestId(QUERY_BUILDER_TEST_ID.QUERY_BUILDER_ACTIONS),
     );
     const queryActionsPanel = renderResult.getByTestId(
-      QUERY_EDITOR_TEST_ID.QUERY_EDITOR_ACTIONS,
+      QUERY_BUILDER_TEST_ID.QUERY_BUILDER_ACTIONS,
     );
 
     expect(
@@ -202,10 +201,10 @@ test(
     });
 
     await waitFor(() =>
-      renderResult.getByTestId(QUERY_EDITOR_TEST_ID.QUERY_EDITOR_ACTIONS),
+      renderResult.getByTestId(QUERY_BUILDER_TEST_ID.QUERY_BUILDER_ACTIONS),
     );
     const queryActionsPanel = renderResult.getByTestId(
-      QUERY_EDITOR_TEST_ID.QUERY_EDITOR_ACTIONS,
+      QUERY_BUILDER_TEST_ID.QUERY_BUILDER_ACTIONS,
     );
 
     expect(
