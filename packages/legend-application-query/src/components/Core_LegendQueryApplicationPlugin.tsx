@@ -248,10 +248,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const proceedCuratedTemplateQueryPromotion =
               async (): Promise<void> => {
                 if (
@@ -335,10 +336,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const openQueryLoader = (): void => {
               editorStore.queryLoaderState.setQueryLoaderDialogOpen(true);
             };
@@ -364,10 +366,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const isExistingQuery =
               editorStore instanceof ExistingQueryEditorStore;
             const handleNewQuery = (): void => {
@@ -434,10 +437,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const isExistingQuery =
               editorStore instanceof ExistingQueryEditorStore;
             const openSaveQueryModal = (): void => {
@@ -468,10 +472,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const handleQuerySaveAs = (): void => {
               editorStore.queryCreatorState.open(
                 editorStore instanceof ExistingQueryEditorStore
@@ -501,10 +506,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const queryDocEntry =
               editorStore.applicationStore.documentationService.getDocEntry(
                 QUERY_DOCUMENTATION_KEY.TUTORIAL_QUERY_BUILDER,
@@ -587,10 +593,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const applicationStore = editorStore.applicationStore;
             const TEMPORARY__toggleLightDarkMode = (): void => {
               applicationStore.layoutService.setColorTheme(
@@ -628,10 +635,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         category: 0,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const isExistingQuery =
               editorStore instanceof ExistingQueryEditorStore;
             const renameQuery = (): void => {
@@ -732,10 +740,11 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
       category: 0,
       renderer: (queryBuilderState): React.ReactNode => {
         if (
-          queryBuilderState.actionConfig instanceof
+          queryBuilderState.workflowState.actionConfig instanceof
           QueryBuilderActionConfig_QueryApplication
         ) {
-          const editorStore = queryBuilderState.actionConfig.editorStore;
+          const editorStore =
+            queryBuilderState.workflowState.actionConfig.editorStore;
           const renderQueryTitle = (): React.ReactNode => {
             if (editorStore instanceof ExistingQueryEditorStore) {
               return (

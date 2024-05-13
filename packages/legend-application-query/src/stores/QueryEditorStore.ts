@@ -1345,8 +1345,9 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
         this.applicationStore.config.options.queryBuilderConfig,
         sourceInfo,
       );
-      classQueryBuilderState.actionConfig =
-        new QueryBuilderActionConfig_QueryApplication(this);
+      classQueryBuilderState.workflowState.updateActionConfig(
+        new QueryBuilderActionConfig_QueryApplication(this),
+      );
       classQueryBuilderState.executionContextState.setMapping(
         exec.mapping.value,
       );

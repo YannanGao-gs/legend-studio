@@ -32,12 +32,12 @@ import {
 } from '@finos/legend-shared';
 import { action, makeObservable, observable } from 'mobx';
 import { renderServiceQueryBuilderSetupPanelContent } from '../../components/workflows/ServiceQueryBuilder.js';
-import {
-  type QueryBuilderActionConfig,
-  QueryBuilderState,
-} from '../QueryBuilderState.js';
+import { QueryBuilderState } from '../QueryBuilderState.js';
 import type { QueryBuilderConfig } from '../../graph-manager/QueryBuilderConfig.js';
-import type { QueryBuilderWorkflowState } from '../query-workflow/QueryBuilderWorkFlowState.js';
+import type {
+  QueryBuilderActionConfig,
+  QueryBuilderWorkflowState,
+} from '../query-workflow/QueryBuilderWorkFlowState.js';
 
 export type ServiceExecutionContext = {
   key: string;
@@ -91,7 +91,7 @@ export class ServiceQueryBuilderState extends QueryBuilderState {
     this.usableServices = usableServices;
     this.onServiceChange = onServiceChange;
     this.onExecutionContextChange = onExecutionContextChange;
-    this.actionConfig = actionConfig;
+    this.workflowState.updateActionConfig(actionConfig);
 
     if (service.execution instanceof PureSingleExecution) {
       this.executionContextState.mapping = service.execution.mapping?.value;

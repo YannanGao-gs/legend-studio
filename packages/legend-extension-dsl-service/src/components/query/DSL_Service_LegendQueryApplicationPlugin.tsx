@@ -40,10 +40,11 @@ export class DSL_Service_LegendQueryApplicationPlugin extends LegendQueryApplica
         category: 1,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             const openQueryProductionizer = async (): Promise<void> => {
               if (!(editorStore instanceof ExistingQueryEditorStore)) {
                 return;
@@ -114,10 +115,11 @@ export class DSL_Service_LegendQueryApplicationPlugin extends LegendQueryApplica
         category: 1,
         renderer: (queryBuilderState): React.ReactNode => {
           if (
-            queryBuilderState.actionConfig instanceof
+            queryBuilderState.workflowState.actionConfig instanceof
             QueryBuilderActionConfig_QueryApplication
           ) {
-            const editorStore = queryBuilderState.actionConfig.editorStore;
+            const editorStore =
+              queryBuilderState.workflowState.actionConfig.editorStore;
             return (
               <ServiceRegisterAction
                 editorStore={editorStore}

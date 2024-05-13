@@ -197,7 +197,7 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
     this.onClassChange = onClassChange;
     this.isAdvancedDataSpaceSearchEnabled = isAdvancedDataSpaceSearchEnabled;
     this.dataSpaceAnalysisResult = dataSpaceAnalysisResult;
-    this.actionConfig = actionConfig;
+    this.workflowState.updateActionConfig(actionConfig);
   }
 
   override get sideBarClassName(): string | undefined {

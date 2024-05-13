@@ -31,7 +31,6 @@ export { QUERY_BUILDER_COMPONENT_ELEMENT_ID } from './components/QueryBuilderCom
 export {
   type QuerySDLC,
   QueryBuilderState,
-  QueryBuilderActionConfig,
 } from './stores/QueryBuilderState.js';
 export {
   getTDSColumnDerivedProperyFromType,

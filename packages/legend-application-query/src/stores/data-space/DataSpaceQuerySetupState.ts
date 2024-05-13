@@ -111,8 +111,8 @@ export class DataSpaceQuerySetupState extends QueryBuilderState {
     });
 
     this.editorStore = editorStore;
-    this.actionConfig = new QueryBuilderActionConfig_QueryApplication(
-      editorStore,
+    this.workflowState.updateActionConfig(
+      new QueryBuilderActionConfig_QueryApplication(editorStore),
     );
     this.depotServerClient = depotServerClient;
     this.onDataSpaceChange = onDataSpaceChange;

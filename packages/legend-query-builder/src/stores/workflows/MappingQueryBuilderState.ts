@@ -26,12 +26,12 @@ import {
 } from '@finos/legend-graph';
 import { getNullableFirstEntry } from '@finos/legend-shared';
 import { renderMappingQueryBuilderSetupPanelContent } from '../../components/workflows/MappingQueryBuilder.js';
-import {
-  type QueryBuilderActionConfig,
-  QueryBuilderState,
-} from '../QueryBuilderState.js';
+import { QueryBuilderState } from '../QueryBuilderState.js';
 import type { QueryBuilderConfig } from '../../graph-manager/QueryBuilderConfig.js';
-import type { QueryBuilderWorkflowState } from '../query-workflow/QueryBuilderWorkFlowState.js';
+import type {
+  QueryBuilderActionConfig,
+  QueryBuilderWorkflowState,
+} from '../query-workflow/QueryBuilderWorkFlowState.js';
 
 export class MappingQueryBuilderState extends QueryBuilderState {
   readonly onMappingChange?: ((val: Mapping) => void) | undefined;
@@ -61,7 +61,7 @@ export class MappingQueryBuilderState extends QueryBuilderState {
 
     this.onMappingChange = onMappingChange;
     this.onRuntimeChange = onRuntimeChange;
-    this.actionConfig = actionConfig;
+    this.workflowState.updateActionConfig(actionConfig);
   }
 
   /**
