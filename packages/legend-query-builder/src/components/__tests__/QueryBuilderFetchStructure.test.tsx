@@ -269,9 +269,7 @@ test(
     const queryBuilder = await waitFor(() =>
       renderResult.getByTestId(QUERY_BUILDER_TEST_ID.QUERY_BUILDER),
     );
-    fireEvent.click(
-      getByTitle(queryBuilder, 'Configure result set modifiers...'),
-    );
+    fireEvent.click(getByTitle(queryBuilder, 'Configure Query Options...'));
     const modal = await waitFor(() => renderResult.getByRole('dialog'));
 
     await waitFor(() => fireEvent.click(getByText(modal, 'Add Value')));
@@ -314,7 +312,7 @@ test(
     fireEvent.click(getByTitle(queryBuilder, 'Clear all projection columns'));
     const closeModal = await waitFor(() => renderResult.getByRole('dialog'));
     fireEvent.click(getByText(closeModal, 'Proceed'));
-    await waitFor(() => renderResult.getByText('Query Options'));
+    await waitFor(() => renderResult.getByText('Set Query Options'));
     const queryBuilderResultModifierPrompt = await waitFor(() =>
       renderResult.getByTestId(
         QUERY_BUILDER_TEST_ID.QUERY_BUILDER_TDS_RESULT_MODIFIER_PROMPT,

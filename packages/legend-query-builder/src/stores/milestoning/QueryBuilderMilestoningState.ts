@@ -407,6 +407,16 @@ export class QueryBuilderMilestoningState implements Hashable {
     this.setProcessingDate(undefined);
   }
 
+  // cleanMilestoningState(): void {
+  //   if(this.isAllVersionsEnabled)
+  //     {
+  //       this.clearGetAllParameters();
+  //       this.clearAllVersionsInRangeParameters();
+  //     }
+
+  //     updateQueryBuilderState();
+  // }
+
   updateMilestoningConfiguration(): void {
     const currentclass = this.queryBuilderState.class;
     if (currentclass !== undefined) {

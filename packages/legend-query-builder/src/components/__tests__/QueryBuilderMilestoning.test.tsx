@@ -465,6 +465,49 @@ test(
   },
 );
 
+test(
+  integrationTest(
+    'Query builder result modifier panel displays milestoning dates',
+  ),
+  async () => {
+    const { renderResult, queryBuilderState } = await TEST__setUpQueryBuilder(
+      TEST_MilestoningModel,
+      stub_RawLambda(),
+      'my::map',
+      'my::runtime',
+      TEST_DATA__ModelCoverageAnalysisResult_Milestoning,
+    );
+    const _personClass =
+      queryBuilderState.graphManagerState.graph.getClass('my::Person');
+    await act(async () => {
+      queryBuilderState.changeClass(_personClass);
+    });
+    const queryBuilderSetup = await waitFor(() =>
+      renderResult.getByTestId(QUERY_BUILDER_TEST_ID.QUERY_BUILDER_SETUP),
+    );
+    await waitFor(() => getAllByText(queryBuilderSetup, 'Person'));
+
+    const resultModifierPanel = await waitFor(() =>
+      renderResult.getByTestId(
+        QUERY_BUILDER_TEST_ID.QUERY_BUILDER_TDS_RESULT_MODIFIER_PROMPT,
+      ),
+    );
+    await waitFor(() => getAllByText(resultModifierPanel, 'Business Date'));
+    await waitFor(() => getAllByText(resultModifierPanel, 'businessDate'));
+
+    // Check if we have paramter panel opened and able to run query
+    expect(queryBuilderState.showParametersPanel).toBe(true);
+    await waitFor(() =>
+      renderResult.getByTestId(
+        QUERY_BUILDER_TEST_ID.QUERY_BUILDER_RESULT_PANEL,
+      ),
+    );
+    fireEvent.click(renderResult.getByText('Run Query'));
+    const executeDialog = await waitFor(() => renderResult.getByRole('dialog'));
+    expect(getByText(executeDialog, 'Set Parameter Values'));
+  },
+);
+
 type QueryGetAllVersionsTestCase = [
   string,
   {

@@ -46,6 +46,7 @@ import { COLUMN_SORT_TYPE } from '../../graph/QueryBuilderMetaModelConst.js';
 import { useEffect, useState } from 'react';
 import type { QueryBuilderProjectionColumnState } from '../../stores/fetch-structure/tds/projection/QueryBuilderProjectionColumnState.js';
 import { QUERY_BUILDER_TEST_ID } from '../../__lib__/QueryBuilderTesting.js';
+import { MilestoningParametersEditorContent } from '../explorer/QueryBuilderMilestoningEditor.js';
 
 const ColumnSortEditor = observer(
   (props: {
@@ -247,18 +248,47 @@ export const QueryResultModifierModal = observer(
       [number | undefined, number | undefined]
     >(stateSlice ?? [undefined, undefined]);
 
+    //milestoning config
+    const [businessDate, setBusinessDate] = useState(
+      tdsState.queryBuilderState.milestoningState.businessDate,
+    );
+    const [processingDate, setProcessingDate] = useState(
+      tdsState.queryBuilderState.milestoningState.processingDate,
+    );
+    const [isAllVersionsEnabled, setIsAllVersionsEnabled] = useState(false);
+    const [isAllVersionsInRangeEnabled, setIsAllVersionsInRangeEnabled] =
+      useState(false);
+    const [startDate, setStartDate] = useState(
+      tdsState.queryBuilderState.milestoningState.startDate,
+    );
+    const [endDate, setEndDate] = useState(
+      tdsState.queryBuilderState.milestoningState.endDate,
+    );
+
     // Sync temp state with tdsState when modal is opened/closed
     useEffect(() => {
       setSortColumns(cloneSortColumnStateArray(stateSortColumns));
       setDistinct(stateDistinct);
       setLimitResults(stateLimitResults);
       setSlice(stateSlice ?? [undefined, undefined]);
+      setBusinessDate(businessDate);
+      setProcessingDate(processingDate);
+      setIsAllVersionsEnabled(isAllVersionsEnabled);
+      setIsAllVersionsInRangeEnabled(isAllVersionsInRangeEnabled);
+      setStartDate(startDate);
+      setEndDate(endDate);
     }, [
       resultSetModifierState.showModal,
       stateSortColumns,
       stateDistinct,
       stateLimitResults,
       stateSlice,
+      businessDate,
+      processingDate,
+      isAllVersionsEnabled,
+      isAllVersionsInRangeEnabled,
+      startDate,
+      endDate,
     ]);
 
     // Handle user actions
@@ -273,6 +303,18 @@ export const QueryResultModifierModal = observer(
         resultSetModifierState.setSlice(undefined);
       }
       resultSetModifierState.setShowModal(false);
+      tdsState.queryBuilderState.milestoningState.setBusinessDate(businessDate);
+      tdsState.queryBuilderState.milestoningState.setProcessingDate(
+        processingDate,
+      );
+      tdsState.queryBuilderState.milestoningState.setAllVersions(
+        isAllVersionsEnabled,
+      );
+      tdsState.queryBuilderState.milestoningState.setAllVersionsInRange(
+        isAllVersionsInRangeEnabled,
+      );
+      tdsState.queryBuilderState.milestoningState.setStartDate(startDate);
+      tdsState.queryBuilderState.milestoningState.setEndDate(endDate);
     };
 
     const handleLimitResultsChange: React.ChangeEventHandler<
@@ -338,9 +380,38 @@ export const QueryResultModifierModal = observer(
           }
           className="editor-modal query-builder__projection__modal"
         >
-          <ModalHeader title="Result Set Modifier" />
+          <ModalHeader title="Query Options" />
           <ModalBody className="query-builder__projection__modal__body">
             <div className="query-builder__projection__options">
+              {tdsState.queryBuilderState.milestoningState
+                .isMilestonedQuery && (
+                <>
+                  <div className="query-builder__projection__options__section-name">
+                    Milestoning
+                  </div>
+                  <MilestoningParametersEditorContent
+                    queryBuilderState={tdsState.queryBuilderState}
+                    settingOptions={{
+                      businessDate: businessDate,
+                      setBusinessDate: setBusinessDate,
+                      processingDate: processingDate,
+                      setProcessingDate: setProcessingDate,
+                      isAllVersionsEnabled: isAllVersionsEnabled,
+                      setIsAllVersionsEnabled: setIsAllVersionsEnabled,
+                      isAllVersionsInRangeEnabled: isAllVersionsInRangeEnabled,
+                      setIsAllVersionsInRangeEnabled:
+                        setIsAllVersionsInRangeEnabled,
+                      startDate: startDate,
+                      setStartDate: setStartDate,
+                      endDate: endDate,
+                      setEndDate: setEndDate,
+                    }}
+                  />
+                  <div className="query-builder__projection__options__section-name">
+                    Other
+                  </div>
+                </>
+              )}
               <ColumnsSortEditor
                 projectionColumns={tdsState.projectionColumns}
                 sortColumns={sortColumns}
