@@ -36,6 +36,7 @@ test(integrationTest('Shows project searcher properly'), async () => {
       <TEST__BrowserEnvironmentProvider>
         <LegendStudioFrameworkProvider>
           <WorkspaceSetup />
+          {/* <>123</> */}
         </LegendStudioFrameworkProvider>
       </TEST__BrowserEnvironmentProvider>
     </ApplicationStoreProvider>,

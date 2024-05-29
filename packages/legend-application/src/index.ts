@@ -34,6 +34,7 @@ export {
   forceDispatchKeyboardEvent,
   BackdropContainer,
 } from './components/ApplicationComponentFrameworkProvider.js';
+export * from './components/__test-utils__/BrowserEnvironmentTestUtils.js';
 
 export * from './stores/ApplicationStore.js';
 export {

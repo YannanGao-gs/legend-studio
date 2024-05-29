@@ -35,6 +35,7 @@ export type { LegendQueryApplicationStore } from './stores/LegendQueryBaseStore.
 // stores
 export * from './stores/LegendQueryApplicationPlugin.js';
 export { BaseQuerySetupStore } from './stores/QuerySetupStore.js';
+export { TEST__getTestLegendQueryApplicationConfig } from './stores/__test-utils__/LegendQueryApplicationTestUtils.js';
 export {
   type QueryPersistConfiguration,
   createViewProjectHandler,
@@ -49,3 +50,4 @@ export {
   useQueryEditorStore,
 } from './components/QueryEditorStoreProvider.js';
 export { QueryEditor } from './components/QueryEditor.js';
+export { LegendQueryFrameworkProvider } from './components/LegendQueryFrameworkProvider.js';

@@ -48,6 +48,7 @@ import { Core_LegendQueryApplicationPlugin } from '../Core_LegendQueryApplicatio
 const TEST_QUERY_ID = 'test-query-id';
 export const TEST_QUERY_NAME = 'MyTestQuery';
 
+//here
 export const TEST__provideMockedQueryEditorStore = (customization?: {
   mock?: ExistingQueryEditorStore;
   applicationStore?: LegendQueryApplicationStore;

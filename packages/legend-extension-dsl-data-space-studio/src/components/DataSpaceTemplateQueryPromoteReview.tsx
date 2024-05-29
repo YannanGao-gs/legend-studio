@@ -69,7 +69,7 @@ const useTemplateQueryPromotionReviewerStore =
       `Can't find query productionizer store in context`,
     );
 
-const TemplateQueryPromotionReviewerContent = observer(() => {
+export const TemplateQueryPromotionReviewerContent = observer(() => {
   const applicationStore = useApplicationStore();
   const queryPromotionReviewerStore = useTemplateQueryPromotionReviewerStore();
   const isLoadingEditor = !queryPromotionReviewerStore.initState.hasCompleted;
