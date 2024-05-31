@@ -37,6 +37,7 @@ import {
 import { makeObservable, observable, action, flow } from 'mobx';
 import type { QueryBuilderState } from './QueryBuilderState.js';
 import type {
+  CuratedTemplateQuery,
   CuratedTemplateQuerySpecification,
   LoadQueryFilterOption,
   QueryBuilder_LegendApplicationPlugin_Extension,
@@ -77,6 +78,7 @@ export class QueryLoaderState {
   extraQueryFilterOptionsRelatedToTemplateQuery: string[] = [];
   queries: LightQuery[] = [];
   curatedTemplateQuerySepcifications: CuratedTemplateQuerySpecification[] = [];
+  selectedLoadQuery: LightQuery | CuratedTemplateQuery | undefined;
 
   isQueryLoaderDialogOpen = false;
   isCuratedTemplateToggled = false;
@@ -114,6 +116,8 @@ export class QueryLoaderState {
       searchText: observable,
       isCuratedTemplateToggled: observable,
       curatedTemplateQuerySepcifications: observable,
+      selectedLoadQuery: observable,
+      setSelectedLoadQuery: action,
       setSearchText: action,
       setQueryLoaderDialogOpen: action,
       setQueries: action,
@@ -144,6 +148,10 @@ export class QueryLoaderState {
 
   setIsCuratedTemplateToggled(val: boolean): void {
     this.isCuratedTemplateToggled = val;
+  }
+
+  setSelectedLoadQuery(val: LightQuery | CuratedTemplateQuery): void {
+    this.selectedLoadQuery = val;
   }
 
   setSearchText(val: string): void {

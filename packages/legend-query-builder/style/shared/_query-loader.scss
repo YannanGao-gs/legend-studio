@@ -134,17 +134,24 @@
   &__results {
     padding: 0.5rem;
     height: 100%;
-    overflow-y: overlay;
 
     &__summary {
       @include flexVCenter;
 
       font-size: 1.2rem;
-      height: 2rem;
+      height: 5%;
       margin-bottom: 0.5rem;
       color: var(--color-dark-grey-400);
       padding: 0 0.5rem;
       user-select: none;
+    }
+
+    &__table {
+      height: 95%;
+
+      &__owner {
+        @include flexVCenter;
+      }
     }
 
     &__summary__info {
@@ -286,14 +293,6 @@
     }
   }
 
-  &__result__arrow {
-    @include flexCenter;
-
-    height: 100%;
-    width: 2.5rem;
-    color: var(--color-dark-grey-280);
-  }
-
   &__dialog {
     margin: 2vh 0;
 
@@ -305,13 +304,16 @@
     }
 
     &__body {
+      padding: 0;
       height: 100%;
-      width: 60rem;
+      width: 60vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     &__body__content {
-      height: 100%;
-      overflow: hidden;
+      flex-grow: 1;
     }
 
     &__header {

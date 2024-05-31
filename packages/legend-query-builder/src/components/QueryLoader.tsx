@@ -40,14 +40,16 @@ import {
   MoreVerticalIcon,
   ThinChevronRightIcon,
   InfoCircleIcon,
+  BaseTablePagination,
 } from '@finos/legend-art';
-import type { LightQuery, RawLambda } from '@finos/legend-graph';
+import { LightQuery, type RawLambda } from '@finos/legend-graph';
 import {
   debounce,
   formatDistanceToNow,
   guaranteeNonNullable,
   isNonNullable,
   quantifyList,
+  type PlainObject,
 } from '@finos/legend-shared';
 import { flowResult } from 'mobx';
 import { observer } from 'mobx-react-lite';
@@ -56,6 +58,11 @@ import {
   QUERY_LOADER_TYPEAHEAD_SEARCH_LIMIT,
   type QueryLoaderState,
 } from '../stores/QueryLoaderState.js';
+import type { CuratedTemplateQuery } from '../stores/QueryBuilder_LegendApplicationPlugin_Extension.js';
+import {
+  DataGrid,
+  type DataGridColumnDefinition,
+} from '@finos/legend-lego/data-grid';
 
 const QueryPreviewViewer = observer(
   (props: { queryLoaderState: QueryLoaderState }) => {
@@ -254,6 +261,139 @@ export const QueryLoader = observer(
       queryLoaderState.setShowPreviewViewer(true);
     };
 
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const handleChangePage = (
+      event: React.MouseEvent<HTMLButtonElement> | null,
+      newPage: number,
+    ) => {
+      setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (
+      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+      setRowsPerPage(parseInt(event.target.value, 10));
+      setPage(0);
+    };
+
+    // const rowData = (res: LightQuery[]): PlainObject[] =>
+    //   res.map((query, idx) => {
+    //     const row: PlainObject = {};
+    //     row.Name = (
+    //       <>
+    //         {showQueryNameEditInput === idx ? (
+    //           <div className="query-loader__result__title__editor">
+    //             <input
+    //               className="query-loader__result__title__editor__input input--dark"
+    //               spellCheck={false}
+    //               ref={queryRenameInputRef}
+    //               value={queryNameInputValue}
+    //               onChange={changeQueryNameInputValue}
+    //               onKeyDown={(event) => {
+    //                 if (event.code === 'Enter') {
+    //                   event.stopPropagation();
+    //                   renameQuery(query)();
+    //                 } else if (event.code === 'Escape') {
+    //                   event.stopPropagation();
+    //                   hideEditQueryNameInput();
+    //                 }
+    //               }}
+    //               onBlur={() => hideEditQueryNameInput()}
+    //               // avoid clicking on the input causing the call to load query
+    //               onClick={(event) => event.stopPropagation()}
+    //             />
+    //           </div>
+    //         ) : (
+    //           <div className="query-loader__result__title" title={query.name}>
+    //             {query.name}
+    //           </div>
+    //         )}
+    //       </>
+    //     );
+    //     row.Author = (
+    //       <div className="table query-loader__results__table__owner">
+    //         <div
+    //           className={clsx(
+    //             'query-loader__result__description__author__icon',
+    //             {
+    //               'query-loader__result__description__author__icon--owner':
+    //                 query.isCurrentUserQuery,
+    //             },
+    //           )}
+    //         >
+    //           <UserIcon />
+    //         </div>
+    //         <div className="query-loader__result__description__author__name">
+    //           {query.isCurrentUserQuery ? (
+    //             <div
+    //               title={query.owner}
+    //               className="query-loader__result__description__owner"
+    //             >
+    //               Me
+    //             </div>
+    //           ) : (
+    //             query.owner
+    //           )}
+    //         </div>
+    //       </div>
+    //     );
+    //     row['Last Modified'] = (
+    //       <div className="query-loader__result__description__date">
+    //         {query.lastUpdatedAt
+    //           ? formatDistanceToNow(new Date(query.lastUpdatedAt), {
+    //               includeSeconds: true,
+    //               addSuffix: true,
+    //             })
+    //           : '(unknown)'}
+    //       </div>
+    //     );
+    //     row['More Actions'] = (
+    //       <DropdownMenu
+    //         className="query-loader__result__actions-menu"
+    //         title="More Actions..."
+    //         content={
+    //           <MenuContent>
+    //             <MenuContentItem onClick={(): void => showPreview(query.id)}>
+    //               Show Query Preview
+    //             </MenuContentItem>
+    //             {!queryLoaderState.isReadOnly && (
+    //               <MenuContentItem
+    //                 disabled={!query.isCurrentUserQuery}
+    //                 onClick={deleteQuery(query)}
+    //               >
+    //                 Delete
+    //               </MenuContentItem>
+    //             )}
+    //             {!queryLoaderState.isReadOnly && (
+    //               <MenuContentItem
+    //                 disabled={!query.isCurrentUserQuery}
+    //                 onClick={showEditQueryNameInput(query.name, idx)}
+    //               >
+    //                 Rename
+    //               </MenuContentItem>
+    //             )}
+    //           </MenuContent>
+    //         }
+    //         menuProps={{
+    //           anchorOrigin: {
+    //             vertical: 'bottom',
+    //             horizontal: 'left',
+    //           },
+    //           transformOrigin: {
+    //             vertical: 'top',
+    //             horizontal: 'left',
+    //           },
+    //           elevation: 7,
+    //         }}
+    //       >
+    //         <MoreVerticalIcon />
+    //       </DropdownMenu>
+    //     );
+    //     return row;
+    //   });
+
     return (
       <div className="query-loader">
         <div className="query-loader__header">
@@ -393,17 +533,78 @@ export const QueryLoader = observer(
                     )}`
                   )}
                 </div>
-                {!queryLoaderState.isCuratedTemplateToggled &&
-                  results
-                    .slice(0, QUERY_LOADER_TYPEAHEAD_SEARCH_LIMIT)
-                    .map((query, idx) => (
-                      <div
-                        className="query-loader__result"
-                        title={`Click to ${loadActionLabel}...`}
-                        key={query.id}
-                        onClick={() => queryLoaderState.loadQuery(query)}
-                      >
-                        <div className="query-loader__result__content">
+
+                {/* <div className="query-builder__result__values__table"> */}
+                {/* <div
+                    className={clsx('query-builder__result__tds-grid', {
+                      'ag-theme-balham':
+                        applicationStore.layoutService
+                          .TEMPORARY__isLightColorThemeEnabled,
+                      'ag-theme-balham-dark':
+                        !applicationStore.layoutService
+                          .TEMPORARY__isLightColorThemeEnabled,
+                    })}
+                  >
+                    <DataGrid
+                      rowData={rowData(
+                        rowsPerPage > 0
+                          ? results.slice(
+                              page * rowsPerPage,
+                              page * rowsPerPage + rowsPerPage,
+                            )
+                          : results,
+                      )}
+                      gridOptions={{
+                        suppressScrollOnNewData: true,
+                        getRowId: (data) => data.data.rowNumber,
+                      }}
+                      // NOTE: when column definition changed, we need to force refresh the cell to make sure the cell renderer is updated
+                      // See https://stackoverflow.com/questions/56341073/how-to-refresh-an-ag-grid-when-a-change-occurs-inside-a-custom-cell-renderer-com
+                      onRowDataUpdated={(params) => {
+                        params.api.refreshCells({ force: true });
+                      }}
+                      suppressFieldDotNotation={true}
+                      columnDefs={[
+                        'Name',
+                        'Author',
+                        'Last Modified',
+                        'More Actions',
+                      ].map(
+                        (colName) =>
+                          ({
+                            minWidth: 50,
+                            sortable: true,
+                            resizable: true,
+                            field: colName,
+                            flex: 1,
+                            // cellRenderer: QueryResultCellRenderer,
+                            // cellRendererParams: {
+                            //   tdsExecutionResult: executionResult,
+                            // },
+                          }) as DataGridColumnDefinition,
+                      )}
+                    />
+                  </div> */}
+                {/* </div> */}
+                <table className="table query-loader__results__table">
+                  <thead>
+                    <tr>
+                      <th className="table__cell--left">Name</th>
+                      <th className="table__cell--left">Author</th>
+                      <th className="table__cell--left">Last Modified</th>
+                      <th className="table__cell--left">More Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(rowsPerPage > 0
+                      ? results.slice(
+                          page * rowsPerPage,
+                          page * rowsPerPage + rowsPerPage,
+                        )
+                      : results
+                    ).map((query, idx) => (
+                      <tr key={query.name}>
+                        <td>
                           {showQueryNameEditInput === idx ? (
                             <div className="query-loader__result__title__editor">
                               <input
@@ -434,21 +635,9 @@ export const QueryLoader = observer(
                               {query.name}
                             </div>
                           )}
-                          <div className="query-loader__result__description">
-                            <div className="query-loader__result__description__date__icon">
-                              <LastModifiedIcon />
-                            </div>
-                            <div className="query-loader__result__description__date">
-                              {query.lastUpdatedAt
-                                ? formatDistanceToNow(
-                                    new Date(query.lastUpdatedAt),
-                                    {
-                                      includeSeconds: true,
-                                      addSuffix: true,
-                                    },
-                                  )
-                                : '(unknown)'}
-                            </div>
+                        </td>
+                        <td>
+                          <div className="table query-loader__results__table__owner">
                             <div
                               className={clsx(
                                 'query-loader__result__description__author__icon',
@@ -473,57 +662,89 @@ export const QueryLoader = observer(
                               )}
                             </div>
                           </div>
-                        </div>
-                        <DropdownMenu
-                          className="query-loader__result__actions-menu"
-                          title="More Actions..."
-                          content={
-                            <MenuContent>
-                              <MenuContentItem
-                                onClick={(): void => showPreview(query.id)}
-                              >
-                                Show Query Preview
-                              </MenuContentItem>
-                              {!queryLoaderState.isReadOnly && (
+                        </td>
+                        <td>
+                          <div className="query-loader__result__description__date">
+                            {query.lastUpdatedAt
+                              ? formatDistanceToNow(
+                                  new Date(query.lastUpdatedAt),
+                                  {
+                                    includeSeconds: true,
+                                    addSuffix: true,
+                                  },
+                                )
+                              : '(unknown)'}
+                          </div>
+                        </td>
+                        <td>
+                          <DropdownMenu
+                            className="query-loader__result__actions-menu"
+                            title="More Actions..."
+                            content={
+                              <MenuContent>
                                 <MenuContentItem
-                                  disabled={!query.isCurrentUserQuery}
-                                  onClick={deleteQuery(query)}
+                                  onClick={(): void => showPreview(query.id)}
                                 >
-                                  Delete
+                                  Show Query Preview
                                 </MenuContentItem>
-                              )}
-                              {!queryLoaderState.isReadOnly && (
-                                <MenuContentItem
-                                  disabled={!query.isCurrentUserQuery}
-                                  onClick={showEditQueryNameInput(
-                                    query.name,
-                                    idx,
-                                  )}
-                                >
-                                  Rename
-                                </MenuContentItem>
-                              )}
-                            </MenuContent>
-                          }
-                          menuProps={{
-                            anchorOrigin: {
-                              vertical: 'bottom',
-                              horizontal: 'left',
-                            },
-                            transformOrigin: {
-                              vertical: 'top',
-                              horizontal: 'left',
-                            },
-                            elevation: 7,
-                          }}
-                        >
-                          <MoreVerticalIcon />
-                        </DropdownMenu>
-                        <div className="query-loader__result__arrow">
-                          <ThinChevronRightIcon />
-                        </div>
-                      </div>
+                                {!queryLoaderState.isReadOnly && (
+                                  <MenuContentItem
+                                    disabled={!query.isCurrentUserQuery}
+                                    onClick={deleteQuery(query)}
+                                  >
+                                    Delete
+                                  </MenuContentItem>
+                                )}
+                                {!queryLoaderState.isReadOnly && (
+                                  <MenuContentItem
+                                    disabled={!query.isCurrentUserQuery}
+                                    onClick={showEditQueryNameInput(
+                                      query.name,
+                                      idx,
+                                    )}
+                                  >
+                                    Rename
+                                  </MenuContentItem>
+                                )}
+                              </MenuContent>
+                            }
+                            menuProps={{
+                              anchorOrigin: {
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                              },
+                              transformOrigin: {
+                                vertical: 'top',
+                                horizontal: 'left',
+                              },
+                              elevation: 7,
+                            }}
+                          >
+                            <MoreVerticalIcon />
+                          </DropdownMenu>
+                        </td>
+                      </tr>
                     ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <BaseTablePagination
+                        rows={results}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        rowsPerPageOptions={[
+                          5,
+                          10,
+                          25,
+                          { label: 'All', value: -1 },
+                        ]}
+                        count={results.length}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                      />
+                    </tr>
+                  </tfoot>
+                </table>
                 {queryLoaderState.queryBuilderState &&
                   queryLoaderState.isCuratedTemplateToggled &&
                   loadCuratedTemplateQuery &&
@@ -616,6 +837,13 @@ export const QueryLoaderDialog = observer(
     const { queryLoaderState, title, loadActionLabel } = props;
     const applicationStore = queryLoaderState.applicationStore;
 
+    const loadCuratedTemplateQuery =
+      queryLoaderState.curatedTemplateQuerySepcifications
+        // already using an arrow function suggested by @typescript-eslint/unbound-method
+        // eslint-disable-next-line
+        .map((s) => () => s.loadCuratedTemplateQuery)
+        .filter(isNonNullable)[0];
+
     const close = (): void => {
       queryLoaderState.setQueryLoaderDialogOpen(false);
       queryLoaderState.reset();
@@ -637,27 +865,44 @@ export const QueryLoaderDialog = observer(
           darkMode={
             !applicationStore.layoutService.TEMPORARY__isLightColorThemeEnabled
           }
-          className="modal query-loader__dialog__body__content"
+          className="query-loader__dialog__body"
         >
-          <div className="modal query-loader__dialog__header">
-            <ModalTitle
-              className="query-loader__dialog__header__title"
-              title={title}
-            />
-            <button
-              className="query-loader__dialog__header__close-btn"
-              title="Close"
-              onClick={close}
-            >
-              <TimesIcon />
-            </button>
-          </div>
-          <div className="modal query-loader__dialog__content">
+          <ModalHeader
+            className="query-loader__dialog__header__title"
+            title={title}
+          />
+          <ModalBody className="query-loader__dialog__body__content">
             <QueryLoader
               queryLoaderState={queryLoaderState}
               loadActionLabel={loadActionLabel ?? title.toLowerCase()}
             />
-          </div>
+          </ModalBody>
+          <ModalFooter>
+            <ModalFooterButton
+              onClick={() => {
+                if (queryLoaderState.selectedLoadQuery) {
+                  if (
+                    queryLoaderState.selectedLoadQuery instanceof LightQuery
+                  ) {
+                    queryLoaderState.loadQuery(
+                      queryLoaderState.selectedLoadQuery,
+                    );
+                  } else {
+                    if (loadCuratedTemplateQuery) {
+                      loadCuratedTemplateQuery()(
+                        queryLoaderState.selectedLoadQuery as CuratedTemplateQuery,
+                        guaranteeNonNullable(
+                          queryLoaderState.queryBuilderState,
+                        ),
+                      );
+                    }
+                  }
+                }
+              }}
+              text="Load"
+            />
+            <ModalFooterButton onClick={close} text="Close" type="secondary" />
+          </ModalFooter>
         </Modal>
       </Dialog>
     );
