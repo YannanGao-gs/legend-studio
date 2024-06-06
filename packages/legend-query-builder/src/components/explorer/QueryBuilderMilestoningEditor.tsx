@@ -19,13 +19,17 @@ import type { QueryBuilderState } from '../../stores/QueryBuilderState.js';
 import { useCallback } from 'react';
 import {
   type ValueSpecification,
-  type VariableExpression,
+  VariableExpression,
   GenericType,
   GenericTypeExplicitReference,
   observe_PrimitiveInstanceValue,
   PrimitiveInstanceValue,
   PRIMITIVE_TYPE,
   PrimitiveType,
+  BUSINESS_DATE_MILESTONING_PROPERTY_NAME,
+  PROCESSING_DATE_MILESTONING_PROPERTY_NAME,
+  MILESTONING_END_DATE_PARAMETER_NAME,
+  MILESTONING_START_DATE_PARAMETER_NAME,
 } from '@finos/legend-graph';
 import { guaranteeNonNullable } from '@finos/legend-shared';
 import { useDrop } from 'react-dnd';
@@ -52,12 +56,30 @@ import { VariableSelector } from '../shared/QueryBuilderVariableSelector.js';
 const MilestoningParameterEditor = observer(
   (props: {
     queryBuilderState: QueryBuilderState;
+    milestoningTag: string;
     parameter: ValueSpecification;
     setParameter: (val: ValueSpecification) => void;
   }) => {
-    const { queryBuilderState, parameter, setParameter } = props;
+    const { queryBuilderState, milestoningTag, parameter, setParameter } =
+      props;
     const handleDrop = useCallback(
       (item: QueryBuilderVariableDragSource): void => {
+        const paramState =
+          queryBuilderState.parametersState.parameterStates.find(
+            (pm) => pm.parameter.name === item.variable.name,
+          );
+        if (parameter instanceof VariableExpression) {
+          const currentParamState =
+            queryBuilderState.parametersState.parameterStates.find(
+              (pm) => pm.parameter.name === parameter.name,
+            );
+          if (currentParamState) {
+            currentParamState.setMilestoningTag(undefined);
+          }
+        }
+        if (paramState) {
+          paramState.setMilestoningTag(milestoningTag);
+        }
         setParameter(item.variable);
       },
       [setParameter],
@@ -137,6 +159,7 @@ const BiTemporalMilestoningEditor = observer(
           </div>
           <MilestoningParameterEditor
             queryBuilderState={queryBuilderState}
+            milestoningTag={PROCESSING_DATE_MILESTONING_PROPERTY_NAME}
             parameter={guaranteeNonNullable(
               queryBuilderState.milestoningState.processingDate,
             )}
@@ -151,6 +174,7 @@ const BiTemporalMilestoningEditor = observer(
           </div>
           <MilestoningParameterEditor
             queryBuilderState={queryBuilderState}
+            milestoningTag={BUSINESS_DATE_MILESTONING_PROPERTY_NAME}
             parameter={guaranteeNonNullable(
               queryBuilderState.milestoningState.businessDate,
             )}
@@ -175,6 +199,7 @@ const BusinessTemporalMilestoningEditor = observer(
         <MilestoningParameterEditor
           key="BusinessDate"
           queryBuilderState={queryBuilderState}
+          milestoningTag={BUSINESS_DATE_MILESTONING_PROPERTY_NAME}
           parameter={guaranteeNonNullable(
             queryBuilderState.milestoningState.businessDate,
           )}
@@ -198,6 +223,7 @@ const ProcessingTemporalMilestoningEditor = observer(
         <MilestoningParameterEditor
           key="BusinessDate"
           queryBuilderState={queryBuilderState}
+          milestoningTag={BUSINESS_DATE_MILESTONING_PROPERTY_NAME}
           parameter={guaranteeNonNullable(
             queryBuilderState.milestoningState.processingDate,
           )}
@@ -251,6 +277,7 @@ const AllVersionsInRangelMilestoningParametersEditor = observer(
           </div>
           <MilestoningParameterEditor
             queryBuilderState={queryBuilderState}
+            milestoningTag={MILESTONING_START_DATE_PARAMETER_NAME}
             parameter={guaranteeNonNullable(
               queryBuilderState.milestoningState.startDate,
             )}
@@ -265,6 +292,7 @@ const AllVersionsInRangelMilestoningParametersEditor = observer(
           </div>
           <MilestoningParameterEditor
             queryBuilderState={queryBuilderState}
+            milestoningTag={MILESTONING_END_DATE_PARAMETER_NAME}
             parameter={guaranteeNonNullable(
               queryBuilderState.milestoningState.endDate,
             )}
@@ -278,12 +306,10 @@ const AllVersionsInRangelMilestoningParametersEditor = observer(
   },
 );
 
-export const MilestoningParametersEditor = observer(
+export const MilestoningParametersEditorContent = observer(
   (props: { queryBuilderState: QueryBuilderState }) => {
     const { queryBuilderState } = props;
-    const applicationStore = queryBuilderState.applicationStore;
     const milestoningState = queryBuilderState.milestoningState;
-    const close = (): void => milestoningState.setShowMilestoningEditor(false);
     const isCompatibleMilestoningParameter = (
       variable: VariableExpression,
     ): boolean =>
@@ -292,6 +318,62 @@ export const MilestoningParametersEditor = observer(
       variable.genericType?.value.rawType.name === PRIMITIVE_TYPE.DATE ||
       variable.genericType?.value.rawType.name === PRIMITIVE_TYPE.DATETIME;
 
+    return (
+      <>
+        {milestoningState.isCurrentClassMilestoned && (
+          <PanelFormBooleanField
+            isReadOnly={false}
+            value={milestoningState.isAllVersionsEnabled}
+            name="all Versions"
+            prompt="Query All Milestoned Versions of the Root Class"
+            update={(value: boolean | undefined): void =>
+              milestoningState.setAllVersions(value)
+            }
+          />
+        )}
+        {milestoningState.isAllVersionsEnabled &&
+          milestoningState.isCurrentClassSupportsVersionsInRange && (
+            <>
+              <PanelFormBooleanField
+                isReadOnly={false}
+                value={milestoningState.isAllVersionsInRangeEnabled}
+                name=" All Versions In Range"
+                prompt="Optionally apply a date range to get All Versions for"
+                update={(value: boolean | undefined): void =>
+                  milestoningState.setAllVersionsInRange(value)
+                }
+              />
+
+              {milestoningState.isAllVersionsInRangeEnabled && (
+                <AllVersionsInRangelMilestoningParametersEditor
+                  queryBuilderState={queryBuilderState}
+                />
+              )}
+            </>
+          )}
+        <TemporalMilestoningEditor queryBuilderState={queryBuilderState} />
+        <PanelFormSection>
+          <div className="panel__content__form__section__header__label">
+            List of compatible milestoning parameters
+          </div>
+        </PanelFormSection>
+        <div className="panel__content__form__section__list__items">
+          <VariableSelector
+            queryBuilderState={queryBuilderState}
+            filterBy={isCompatibleMilestoningParameter}
+          />
+        </div>
+      </>
+    );
+  },
+);
+
+export const MilestoningParametersEditor = observer(
+  (props: { queryBuilderState: QueryBuilderState }) => {
+    const { queryBuilderState } = props;
+    const applicationStore = queryBuilderState.applicationStore;
+    const milestoningState = queryBuilderState.milestoningState;
+    const close = (): void => milestoningState.setShowMilestoningEditor(false);
     return (
       <Dialog
         open={milestoningState.showMilestoningEditor}
@@ -310,49 +392,9 @@ export const MilestoningParametersEditor = observer(
         >
           <ModalHeader title="Milestoning Parameters" />
           <ModalBody className="query-builder__variables__modal__body">
-            {milestoningState.isCurrentClassMilestoned && (
-              <PanelFormBooleanField
-                isReadOnly={false}
-                value={milestoningState.isAllVersionsEnabled}
-                name="all Versions"
-                prompt="Query All Milestoned Versions of the Root Class"
-                update={(value: boolean | undefined): void =>
-                  milestoningState.setAllVersions(value)
-                }
-              />
-            )}
-            {milestoningState.isAllVersionsEnabled &&
-              milestoningState.isCurrentClassSupportsVersionsInRange && (
-                <>
-                  <PanelFormBooleanField
-                    isReadOnly={false}
-                    value={milestoningState.isAllVersionsInRangeEnabled}
-                    name=" All Versions In Range"
-                    prompt="Optionally apply a date range to get All Versions for"
-                    update={(value: boolean | undefined): void =>
-                      milestoningState.setAllVersionsInRange(value)
-                    }
-                  />
-
-                  {milestoningState.isAllVersionsInRangeEnabled && (
-                    <AllVersionsInRangelMilestoningParametersEditor
-                      queryBuilderState={queryBuilderState}
-                    />
-                  )}
-                </>
-              )}
-            <TemporalMilestoningEditor queryBuilderState={queryBuilderState} />
-            <PanelFormSection>
-              <div className="panel__content__form__section__header__label">
-                List of compatible milestoning parameters
-              </div>
-            </PanelFormSection>
-            <div className="panel__content__form__section__list__items">
-              <VariableSelector
-                queryBuilderState={queryBuilderState}
-                filterBy={isCompatibleMilestoningParameter}
-              />
-            </div>
+            <MilestoningParametersEditorContent
+              queryBuilderState={queryBuilderState}
+            />
           </ModalBody>
           <ModalFooter>
             <ModalFooterButton text="Close" onClick={close} type="secondary" />

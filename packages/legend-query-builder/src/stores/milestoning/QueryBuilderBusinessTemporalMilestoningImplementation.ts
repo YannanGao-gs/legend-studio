@@ -45,9 +45,12 @@ export class QueryBuilderBusinessTemporalMilestoningImplementation extends Query
   initializeMilestoningParameters(force?: boolean): void {
     if (!this.milestoningState.businessDate || force) {
       this.milestoningState.setBusinessDate(
-        this.milestoningState.buildMilestoningParameter(
+        this.getExistingMilestoningParameter(
           BUSINESS_DATE_MILESTONING_PROPERTY_NAME,
-        ),
+        ) ??
+          this.milestoningState.buildMilestoningParameter(
+            BUSINESS_DATE_MILESTONING_PROPERTY_NAME,
+          ),
       );
     }
     // Show the parameter panel because we populate paramaters state with milestoning parameters

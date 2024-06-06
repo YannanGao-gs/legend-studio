@@ -44,9 +44,12 @@ export class QueryBuilderProcessingTemporalMilestoningImplementation extends Que
   initializeMilestoningParameters(force?: boolean): void {
     if (!this.milestoningState.processingDate || force) {
       this.milestoningState.setProcessingDate(
-        this.milestoningState.buildMilestoningParameter(
+        this.getExistingMilestoningParameter(
           PROCESSING_DATE_MILESTONING_PROPERTY_NAME,
-        ),
+        ) ??
+          this.milestoningState.buildMilestoningParameter(
+            PROCESSING_DATE_MILESTONING_PROPERTY_NAME,
+          ),
       );
     }
     // Show the parameter panel because we populate paramaters state with milestoning parameters

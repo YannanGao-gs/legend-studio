@@ -88,4 +88,14 @@ export abstract class QueryBuilderMilestoningImplementation {
     idx?: number,
     derivedPropertyExpressionState?: QueryBuilderDerivedPropertyExpressionState,
   ): ValueSpecification;
+
+  getExistingMilestoningParameter(
+    milestoningTag: string,
+  ): ValueSpecification | undefined {
+    const lambdaState =
+      this.milestoningState.queryBuilderState.parametersState.parameterStates.find(
+        (pm) => pm.milestoningTag === milestoningTag,
+      );
+    return lambdaState ? lambdaState.parameter : undefined;
+  }
 }

@@ -52,6 +52,7 @@ import {
   QueryBuilderFilterTreeConditionNodeData,
   QueryBuilderFilterTreeExistsNodeData,
 } from '../filter/QueryBuilderFilterState.js';
+import { QueryBuilderSimpleConstantExpressionState } from '../QueryBuilderConstantsState.js';
 
 export class QueryBuilderMilestoningState implements Hashable {
   readonly milestoningImplementations: QueryBuilderMilestoningImplementation[] =
@@ -75,7 +76,7 @@ export class QueryBuilderMilestoningState implements Hashable {
       startDate: observable,
       endDate: observable,
       showMilestoningEditor: observable,
-      isMilestonedQuery: computed,
+
       setProcessingDate: action,
       setBusinessDate: action,
       setStartDate: action,
@@ -87,6 +88,10 @@ export class QueryBuilderMilestoningState implements Hashable {
       initializeAllVersionsInRangeParameters: action,
       clearAllVersionsInRangeParameters: action,
       clearGetAllParameters: action,
+
+      isAllVersionsEnabled: computed,
+      isAllVersionsInRangeEnabled: computed,
+      isMilestonedQuery: computed,
       hashCode: computed,
     });
 
@@ -380,9 +385,9 @@ export class QueryBuilderMilestoningState implements Hashable {
         this.queryBuilderState.parametersState.parameterStates.find(
           (p) => p.parameter === this.startDate,
         );
-      this.queryBuilderState.parametersState.removeParameter(
-        guaranteeNonNullable(paramState),
-      );
+      if (paramState) {
+        this.queryBuilderState.parametersState.removeParameter(paramState);
+      }
     }
     if (
       this.endDate instanceof VariableExpression &&
@@ -394,9 +399,9 @@ export class QueryBuilderMilestoningState implements Hashable {
         this.queryBuilderState.parametersState.parameterStates.find(
           (p) => p.parameter === this.endDate,
         );
-      this.queryBuilderState.parametersState.removeParameter(
-        guaranteeNonNullable(paramState),
-      );
+      if (paramState) {
+        this.queryBuilderState.parametersState.removeParameter(paramState);
+      }
     }
     this.setStartDate(undefined);
     this.setEndDate(undefined);
@@ -442,9 +447,54 @@ export class QueryBuilderMilestoningState implements Hashable {
         this.queryBuilderState.graphManagerState.graph,
       );
       variableState.mockParameterValue();
+      variableState.setMilestoningTag(parameterName);
       this.queryBuilderState.parametersState.addParameter(variableState);
     }
     return milestoningParameter;
+  }
+
+  syncParametersStateWithMilestingState(param: VariableExpression): void {
+    if (
+      !this.queryBuilderState.parametersState.parameterStates.find(
+        (p) => p.variableName === param.name,
+      )
+    ) {
+      const variableState = new LambdaParameterState(
+        param,
+        this.queryBuilderState.observerContext,
+        this.queryBuilderState.graphManagerState.graph,
+      );
+      variableState.mockParameterValue();
+      this.queryBuilderState.parametersState.addParameter(variableState);
+    }
+  }
+
+  syncConstantStateWithMilestingState(
+    param: VariableExpression,
+    constantValue: ValueSpecification,
+  ): void {
+    if (
+      !this.queryBuilderState.constantState.constants.find(
+        (p) => p.variable.name === param.name,
+      )
+    ) {
+      const variableState = new QueryBuilderSimpleConstantExpressionState(
+        this.queryBuilderState,
+        param,
+        constantValue,
+      );
+      this.queryBuilderState.constantState.addConstant(variableState);
+    }
+  }
+
+  cleanParameterAndConstantState(): void {
+    const cleanedParamStates =
+      this.queryBuilderState.parametersState.parameterStates.filter((st) =>
+        this.queryBuilderState.isVariableUsed(st.parameter),
+      );
+    console.log('cleanedParamStates');
+    console.log(cleanedParamStates);
+    this.queryBuilderState.parametersState.parameterStates = cleanedParamStates;
   }
 
   isVariableUsed(variable: VariableExpression): boolean {
@@ -454,7 +504,15 @@ export class QueryBuilderMilestoningState implements Hashable {
     const usedInProcessingDate = this.processingDate
       ? isValueExpressionReferencedInValue(variable, this.processingDate)
       : false;
-    return usedInBusiness || usedInProcessingDate;
+    const usedInStartDate = this.startDate
+      ? isValueExpressionReferencedInValue(variable, this.startDate)
+      : false;
+    const usedInEndDate = this.endDate
+      ? isValueExpressionReferencedInValue(variable, this.endDate)
+      : false;
+    return (
+      usedInBusiness || usedInProcessingDate || usedInStartDate || usedInEndDate
+    );
   }
 
   get hashCode(): string {

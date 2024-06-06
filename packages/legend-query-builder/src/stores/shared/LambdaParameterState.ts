@@ -204,6 +204,7 @@ export class LambdaParameterState implements Hashable {
   readonly observerContext: ObserverContext;
 
   value: ValueSpecification | undefined;
+  milestoningTag?: string | undefined;
 
   constructor(
     variableExpression: VariableExpression,
@@ -270,6 +271,10 @@ export class LambdaParameterState implements Hashable {
       valueSpecification_setMultiplicity(variableExpression, mul);
       this.mockParameterValue();
     }
+  }
+
+  setMilestoningTag(val: string | undefined): void {
+    this.milestoningTag = val;
   }
 
   get variableName(): string {

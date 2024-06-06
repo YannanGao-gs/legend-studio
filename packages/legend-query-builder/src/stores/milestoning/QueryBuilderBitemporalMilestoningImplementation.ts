@@ -53,17 +53,29 @@ export class QueryBuilderBitemporalMilestoningImplementation extends QueryBuilde
 
   initializeMilestoningParameters(force?: boolean): void {
     if (!this.milestoningState.processingDate || force) {
-      this.milestoningState.setProcessingDate(
-        this.milestoningState.buildMilestoningParameter(
+      console.log('=====');
+      console.log(
+        this.getExistingMilestoningParameter(
           PROCESSING_DATE_MILESTONING_PROPERTY_NAME,
         ),
+      );
+      this.milestoningState.setProcessingDate(
+        this.getExistingMilestoningParameter(
+          PROCESSING_DATE_MILESTONING_PROPERTY_NAME,
+        ) ??
+          this.milestoningState.buildMilestoningParameter(
+            PROCESSING_DATE_MILESTONING_PROPERTY_NAME,
+          ),
       );
     }
     if (!this.milestoningState.businessDate || force) {
       this.milestoningState.setBusinessDate(
-        this.milestoningState.buildMilestoningParameter(
+        this.getExistingMilestoningParameter(
           BUSINESS_DATE_MILESTONING_PROPERTY_NAME,
-        ),
+        ) ??
+          this.milestoningState.buildMilestoningParameter(
+            BUSINESS_DATE_MILESTONING_PROPERTY_NAME,
+          ),
       );
     }
     // Show the parameter panel because we populate paramaters state with milestoning parameters

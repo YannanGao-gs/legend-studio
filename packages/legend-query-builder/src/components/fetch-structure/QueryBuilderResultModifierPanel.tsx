@@ -45,14 +45,17 @@ import {
 import { useApplicationStore } from '@finos/legend-application';
 import type { QueryBuilderTDSState } from '../../stores/fetch-structure/tds/QueryBuilderTDSState.js';
 import type { QueryBuilderTDSColumnState } from '../../stores/fetch-structure/tds/QueryBuilderTDSColumnState.js';
-import { COLUMN_SORT_TYPE } from '../../graph/QueryBuilderMetaModelConst.js';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  COLUMN_SORT_TYPE,
+  QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS,
+} from '../../graph/QueryBuilderMetaModelConst.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { QueryBuilderProjectionColumnState } from '../../stores/fetch-structure/tds/projection/QueryBuilderProjectionColumnState.js';
 import { QUERY_BUILDER_TEST_ID } from '../../__lib__/QueryBuilderTesting.js';
 import { VariableSelector } from '../shared/QueryBuilderVariableSelector.js';
 import {
   type ValueSpecification,
-  type VariableExpression,
+  VariableExpression,
   PrimitiveType,
   Multiplicity,
   areMultiplicitiesEqual,
@@ -63,6 +66,8 @@ import {
   type QueryBuilderVariableDragSource,
 } from '../shared/BasicValueSpecificationEditor.js';
 import { useDrop } from 'react-dnd';
+import { MilestoningParametersEditorContent } from '../explorer/QueryBuilderMilestoningEditor.js';
+import { QueryBuilderSimpleConstantExpressionState } from '../../stores/QueryBuilderConstantsState.js';
 
 const ColumnSortEditor = observer(
   (props: {
@@ -259,6 +264,125 @@ export const QueryResultModifierModal = observer(
       deepClone(watermarkState.value),
     );
 
+    //milestoning config
+    const milestoningState = tdsState.queryBuilderState.milestoningState;
+
+    const isParamFromParameterState = (
+      param: ValueSpecification | undefined,
+    ): boolean => {
+      if (param && param instanceof VariableExpression) {
+        const paramState =
+          milestoningState.queryBuilderState.parametersState.parameterStates.find(
+            (p) => p.parameter.name === param.name,
+          );
+        return paramState !== undefined;
+      }
+      return false;
+    };
+
+    const getConstantValueFromConstantState = (
+      param: ValueSpecification | undefined,
+    ): ValueSpecification | undefined => {
+      if (param && param instanceof VariableExpression) {
+        const constant =
+          milestoningState.queryBuilderState.constantState.constants.find(
+            (p) => p.variable.name === param.name,
+          );
+        if (constant instanceof QueryBuilderSimpleConstantExpressionState) {
+          return constant.value;
+        }
+      }
+      return undefined;
+    };
+
+    const businessDate = useRef({
+      value: milestoningState.businessDate,
+      isFromParameterState: isParamFromParameterState(
+        milestoningState.businessDate,
+      ),
+      constantValue: getConstantValueFromConstantState(
+        milestoningState.businessDate,
+      ),
+    });
+    const processingDate = useRef({
+      value: milestoningState.processingDate,
+      isFromParameterState: isParamFromParameterState(
+        milestoningState.processingDate,
+      ),
+      constantValue: getConstantValueFromConstantState(
+        milestoningState.processingDate,
+      ),
+    });
+    const isAllVersionsEnabled = useRef(milestoningState.isAllVersionsEnabled);
+    const isAllVersionsInRangeEnabled = useRef(
+      milestoningState.isAllVersionsInRangeEnabled,
+    );
+    const startDate = useRef({
+      value: milestoningState.startDate,
+      isFromParameterState: isParamFromParameterState(
+        milestoningState.startDate,
+      ),
+      constantValue: getConstantValueFromConstantState(
+        milestoningState.startDate,
+      ),
+    });
+    const endDate = useRef({
+      value: milestoningState.endDate,
+      isFromParameterState: isParamFromParameterState(milestoningState.endDate),
+      constantValue: getConstantValueFromConstantState(
+        milestoningState.endDate,
+      ),
+    });
+
+    const syncParameterAndConstantStateWithMilestoningState = (
+      param: React.MutableRefObject<{
+        value: ValueSpecification | undefined;
+        isFromParameterState: boolean;
+        constantValue: ValueSpecification | undefined;
+      }>,
+    ): void => {
+      if (param.current.value instanceof VariableExpression) {
+        if (param.current.isFromParameterState) {
+          milestoningState.syncParametersStateWithMilestingState(
+            param.current.value,
+          );
+        } else if (param.current.constantValue) {
+          milestoningState.syncConstantStateWithMilestingState(
+            param.current.value,
+            param.current.constantValue,
+          );
+        }
+      }
+    };
+
+    const resetMilestoningToInitial = (): void => {
+      if (isAllVersionsInRangeEnabled.current) {
+        milestoningState.queryBuilderState.setGetAllFunction(
+          QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS.GET_ALL_VERSIONS_IN_RANGE,
+        );
+        milestoningState.setStartDate(startDate.current.value);
+        milestoningState.setEndDate(endDate.current.value);
+      } else {
+        milestoningState.clearAllVersionsInRangeParameters();
+        if (isAllVersionsEnabled.current) {
+          milestoningState.queryBuilderState.setGetAllFunction(
+            QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS.GET_ALL_VERSIONS,
+          );
+          milestoningState.clearGetAllParameters();
+        } else {
+          milestoningState.queryBuilderState.setGetAllFunction(
+            QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS.GET_ALL,
+          );
+          milestoningState.setBusinessDate(businessDate.current.value);
+          syncParameterAndConstantStateWithMilestoningState(businessDate);
+          milestoningState.setProcessingDate(processingDate.current.value);
+          syncParameterAndConstantStateWithMilestoningState(processingDate);
+        }
+      }
+      milestoningState.cleanParameterAndConstantState();
+      console.log(milestoningState);
+    };
+
     // Sync temp state with tdsState when modal is opened/closed
     useEffect(() => {
       setSortColumns(cloneSortColumnStateArray(stateSortColumns));
@@ -276,7 +400,10 @@ export const QueryResultModifierModal = observer(
     ]);
 
     // Handle user actions
-    const closeModal = (): void => resultSetModifierState.setShowModal(false);
+    const closeModal = (): void => {
+      resetMilestoningToInitial();
+      resultSetModifierState.setShowModal(false);
+    };
     const applyChanges = (): void => {
       resultSetModifierState.setSortColumns(sortColumns);
       resultSetModifierState.setDistinct(distinct);
@@ -288,6 +415,45 @@ export const QueryResultModifierModal = observer(
       }
       resultSetModifierState.setShowModal(false);
       watermarkState.setValue(watermarkValue);
+      businessDate.current = {
+        value: milestoningState.businessDate,
+        isFromParameterState: isParamFromParameterState(
+          milestoningState.businessDate,
+        ),
+        constantValue: getConstantValueFromConstantState(
+          milestoningState.businessDate,
+        ),
+      };
+      processingDate.current = {
+        value: milestoningState.processingDate,
+        isFromParameterState: isParamFromParameterState(
+          milestoningState.processingDate,
+        ),
+        constantValue: getConstantValueFromConstantState(
+          milestoningState.processingDate,
+        ),
+      };
+      isAllVersionsEnabled.current = milestoningState.isAllVersionsEnabled;
+      isAllVersionsInRangeEnabled.current =
+        milestoningState.isAllVersionsInRangeEnabled;
+      startDate.current = {
+        value: milestoningState.startDate,
+        isFromParameterState: isParamFromParameterState(
+          milestoningState.startDate,
+        ),
+        constantValue: getConstantValueFromConstantState(
+          milestoningState.startDate,
+        ),
+      };
+      endDate.current = {
+        value: milestoningState.endDate,
+        isFromParameterState: isParamFromParameterState(
+          milestoningState.endDate,
+        ),
+        constantValue: getConstantValueFromConstantState(
+          milestoningState.endDate,
+        ),
+      };
     };
 
     const handleLimitResultsChange: React.ChangeEventHandler<
@@ -397,9 +563,23 @@ export const QueryResultModifierModal = observer(
           }
           className="editor-modal query-builder__projection__modal"
         >
-          <ModalHeader title="Result Set Modifier" />
+          <ModalHeader title="Query Options" />
           <ModalBody className="query-builder__projection__modal__body">
             <div className="query-builder__projection__options">
+              {tdsState.queryBuilderState.milestoningState
+                .isMilestonedQuery && (
+                <>
+                  <div className="query-builder__projection__options__section-name">
+                    Milestoning
+                  </div>
+                  <MilestoningParametersEditorContent
+                    queryBuilderState={tdsState.queryBuilderState}
+                  />
+                  <div className="query-builder__projection__options__section-name">
+                    Other
+                  </div>
+                </>
+              )}
               <ColumnsSortEditor
                 projectionColumns={tdsState.projectionColumns}
                 sortColumns={sortColumns}
