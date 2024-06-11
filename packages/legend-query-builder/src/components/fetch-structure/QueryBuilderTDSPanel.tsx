@@ -1389,12 +1389,20 @@ export const QueryBuilderTDSPanel = observer(
                       <div className="query-builder__projection__result-modifier-prompt__header__label__title">
                         (
                         {getNameOfValueSpecification(
-                          tdsState.queryBuilderState.milestoningState.startDate,
+                          tdsState.queryBuilderState.milestoningState.getMilestoningParameterValue(
+                            tdsState.queryBuilderState.milestoningState
+                              .startDate,
+                          ) ??
+                            tdsState.queryBuilderState.milestoningState
+                              .startDate,
                           tdsState.queryBuilderState,
                         )}{' '}
                         -{' '}
                         {getNameOfValueSpecification(
-                          tdsState.queryBuilderState.milestoningState.endDate,
+                          tdsState.queryBuilderState.milestoningState.getMilestoningParameterValue(
+                            tdsState.queryBuilderState.milestoningState.endDate,
+                          ) ??
+                            tdsState.queryBuilderState.milestoningState.endDate,
                           tdsState.queryBuilderState,
                         )}
                         )
