@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-import type { V1_ColSpec } from './V1_ColSpec.js';
+import type { V1_Lambda } from '../V1_Lambda.js';
 
-//here
-export class V1_ColSpecArray {
-  colSpecs: V1_ColSpec[] = [];
+export class V1_ColumnSpecification {
+  name!: string;
+  documentation: string | undefined;
+}
+
+export class V1_BasicColumnSpecification extends V1_ColumnSpecification {
+  func!: V1_Lambda;
 }

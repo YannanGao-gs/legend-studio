@@ -15,6 +15,8 @@
  */
 
 import { guaranteeNonNullable, isString, uuid } from '@finos/legend-shared';
+import type { Store } from '../../../graph/metamodel/pure/packageableElements/store/Store.js';
+import type { NamedRelation } from '../../../graph/metamodel/pure/packageableElements/store/relational/model/RelationalOperationElement.js';
 
 // Core
 export enum BuilderType {
@@ -122,6 +124,14 @@ export class TDSRow {
 export class TabularDataSet {
   columns: string[] = [];
   rows: TDSRow[] = [];
+}
+
+export class TabularDataSetImplementation extends TabularDataSet {
+  store!: Store;
+}
+
+export class TableTDS extends TabularDataSetImplementation {
+  table!: NamedRelation;
 }
 
 export class TDSExecutionResult extends ExecutionResult {

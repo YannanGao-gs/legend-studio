@@ -139,6 +139,7 @@ export const processTDS_OLAPGroupByExpression = (
     sortByState = new WindowGroupByColumnSortByState(sortColState, colSortType);
   }
   // process olap operation
+  // here
   let operatorState: QueryBuilderTDS_WindowOperatorState;
   if (olapOperationExpression instanceof SimpleFunctionExpression) {
     assertTrue(

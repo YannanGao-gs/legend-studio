@@ -68,6 +68,7 @@ import {
   processInternalizeExpression,
 } from './fetch-structure/graph-fetch/QueryBuilderGraphFetchTreeStateBuilder.js';
 import {
+  processTDSColExpression,
   processTDSDistinctExpression,
   processTDSProjectExpression,
   processTDSProjectionColumnPropertyExpression,
@@ -661,7 +662,15 @@ export class QueryBuilderValueSpecificationProcessor
           this.parentLambda,
         );
       }
-
+      return;
+    } else if (
+      matchFunctionName(functionName, QUERY_BUILDER_SUPPORTED_FUNCTIONS.TDS_COL)
+    ) {
+      processTDSColExpression(
+        valueSpecification,
+        this.queryBuilderState,
+        this.parentLambda,
+      );
       return;
     } else if (
       matchFunctionName(

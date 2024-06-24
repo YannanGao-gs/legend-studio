@@ -25,6 +25,7 @@ import {
   V1_buildOLAPGroupByFunctionExpression,
   V1_buildProjectFunctionExpression,
   V1_buildSubTypePropertyExpressionTypeInference,
+  V1_buildTypedProjectFunctionExpression,
   V1_buildWatermarkFunctionExpression,
 } from './v1/V1_QueryValueSpecificationBuilderHelper.js';
 import {
@@ -151,13 +152,23 @@ export class QueryBuilder_PureProtocolProcessorPlugin extends PureProtocolProces
             QUERY_BUILDER_SUPPORTED_FUNCTIONS.RELATION_PROJECT,
           ])
         ) {
-          return V1_buildProjectFunctionExpression(
-            functionName,
-            parameters,
-            openVariables,
-            compileContext,
-            processingContext,
-          );
+          try {
+            return V1_buildProjectFunctionExpression(
+              functionName,
+              parameters,
+              openVariables,
+              compileContext,
+              processingContext,
+            );
+          } catch {
+            return V1_buildTypedProjectFunctionExpression(
+              functionName,
+              parameters,
+              openVariables,
+              compileContext,
+              processingContext,
+            );
+          }
         } else if (
           matchFunctionName(
             functionName,

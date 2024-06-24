@@ -19,6 +19,8 @@ export enum QUERY_BUILDER_PURE_PATH {
   TDS_ROW = 'meta::pure::tds::TDSRow',
   TDS_COLUMN = 'meta::pure::tds::TDSColumn',
   TDS_TABULAR_DATASET = 'meta::pure::tds::TabularDataSet',
+  TDS_BASIC_COLUMN_SPECIFICATION = 'meta::pure::tds::BasicColumnSpecification',
+  TDS_COLUMN_SPECIFICATION = 'meta::pure::tds::ColumnSpecification',
 
   // time
   DURATION_UNIT = 'meta::pure::functions::date::DurationUnit',
@@ -26,6 +28,11 @@ export enum QUERY_BUILDER_PURE_PATH {
 
   // RELATION
   RELATION = 'meta::pure::metamodel::relation::Relation',
+
+  PATH = 'meta::pure::metamodel::path::Path',
+  PATH_ELEMENT = 'meta::pure::metamodel::path::PathElement',
+  CAST_PATH_ELEMENT = 'meta::pure::metamodel::path::CastPathElement',
+
   // serialization
   SERIALIZE_CONFIG = 'meta::pure::graphFetch::execution::AlloySerializationConfig',
 }
@@ -116,6 +123,7 @@ export enum QUERY_BUILDER_SUPPORTED_FUNCTIONS {
   TDS_TAKE = 'meta::pure::tds::take',
   TDS_RESTRICT = 'meta::pure::tds::restrict',
   TDS_FUNC = 'meta::pure::tds::func',
+  TDS_COL = 'meta::pure::tds::col',
 
   // Relation
   RELATION_PROJECT = 'meta::pure::functions::relation::project',
