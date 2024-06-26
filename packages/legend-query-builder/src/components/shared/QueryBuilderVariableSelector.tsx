@@ -15,6 +15,8 @@
  */
 
 import {
+  BasePopover,
+  BaseRadioGroup,
   CalculatorIcon,
   ContextMenu,
   DollarIcon,
@@ -32,19 +34,31 @@ import {
   type VariableExpression,
   type ValueSpecification,
   SimpleFunctionExpression,
+  PrimitiveInstanceValue,
+  PRIMITIVE_TYPE,
 } from '@finos/legend-graph';
 import { observer } from 'mobx-react-lite';
 import { useDrag } from 'react-dnd';
 import type { QueryBuilderState } from '../../stores/QueryBuilderState.js';
-import { getValueSpecificationStringValue } from '../../stores/shared/ValueSpecificationEditorHelper.js';
+import {
+  buildPrimitiveInstanceValue,
+  getValueSpecificationStringValue,
+} from '../../stores/shared/ValueSpecificationEditorHelper.js';
 import {
   type QueryBuilderVariableDragSource,
   QUERY_BUILDER_VARIABLE_DND_TYPE,
   VariableInfoTooltip,
 } from './BasicValueSpecificationEditor.js';
-import { buildDatePickerOption } from './CustomDatePicker.js';
+import {
+  CUSTOM_DATE_PICKER_OPTION,
+  DatePickerOption,
+  buildDatePickerOption,
+  reservedCustomDateOptions,
+} from './CustomDatePicker.js';
 import { QueryBuilderSimpleConstantExpressionState } from '../../stores/QueryBuilderConstantsState.js';
 import { forwardRef, useState } from 'react';
+import { useApplicationStore } from '@finos/legend-application';
+import { guaranteeNonNullable } from '@finos/legend-shared';
 
 const CALCULATED = '(calculated)';
 
@@ -139,6 +153,7 @@ export const VariableViewer = observer(
       queryBuilderState,
       extraContextMenuActions,
     } = props;
+    const applicationStore = useApplicationStore();
     const isVariableUsed = queryBuilderState.isVariableUsed(variable);
     const [isSelectedFromContextMenu, setIsSelectedFromContextMenu] =
       useState(false);
@@ -164,6 +179,87 @@ export const VariableViewer = observer(
           )
         : undefined
       : undefined;
+    const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+    const [datePickerOption, setDatePickerOption] = useState(
+      milestoningParameterValue
+        ? buildDatePickerOption(
+            milestoningParameterValue as
+              | SimpleFunctionExpression
+              | PrimitiveInstanceValue,
+            applicationStore,
+          )
+        : undefined,
+    );
+
+    const [milestoningValueSpec, setMilestoningValueSpec] = useState(
+      milestoningParameterValue ?? undefined,
+    );
+    const openCustomDatePickerPopover = (
+      event: React.MouseEvent<HTMLButtonElement>,
+    ): void => {
+      setAnchorEl(event.currentTarget);
+    };
+    const handleEnter = (): void => {
+      setDatePickerOption(
+        buildDatePickerOption(valueSpecification, applicationStore),
+      );
+    };
+    const closeCustomDatePickerPopover = (): void => {
+      setDatePickerOption(
+        buildDatePickerOption(valueSpecification, applicationStore),
+      );
+      setAnchorEl(null);
+      handleBlur?.();
+    };
+    const handleDatePickerOptionChange = (
+      event: React.ChangeEvent<HTMLInputElement>,
+    ): void => {
+      const chosenDatePickerOption = new DatePickerOption(
+        (event.target as HTMLInputElement).value,
+        (event.target as HTMLInputElement).value,
+      );
+      if (
+        CUSTOM_DATE_PICKER_OPTION.LATEST_DATE === chosenDatePickerOption.value
+      ) {
+        setMilestoningValueSpec(
+          buildPrimitiveInstanceValue(
+            queryBuilderState.graphManagerState.graph,
+            PRIMITIVE_TYPE.LATESTDATE,
+            event.target.value,
+            queryBuilderState.observerContext,
+          ),
+        );
+      } else if (
+        // Elements in this list will trigger children date components
+        ![
+          CUSTOM_DATE_PICKER_OPTION.ABSOLUTE_DATE,
+          CUSTOM_DATE_PICKER_OPTION.ABSOLUTE_TIME,
+          CUSTOM_DATE_PICKER_OPTION.CUSTOM_DATE,
+          CUSTOM_DATE_PICKER_OPTION.FIRST_DAY_OF,
+          CUSTOM_DATE_PICKER_OPTION.PREVIOUS_DAY_OF_WEEK,
+        ].includes(chosenDatePickerOption.value as CUSTOM_DATE_PICKER_OPTION)
+      ) {
+        const theReservedCustomDateOption = reservedCustomDateOptions.filter(
+          (d) => d.value === chosenDatePickerOption.value,
+        );
+        theReservedCustomDateOption.length > 0
+          ? setMilestoningValueSpec(
+              buildPureAdjustDateFunction(
+                guaranteeNonNullable(theReservedCustomDateOption[0]),
+                queryBuilderState.graphManagerState.graph,
+                queryBuilderState.observerContext,
+              ),
+            )
+          : setMilestoningValueSpec(
+              buildPureDateFunctionExpression(
+                chosenDatePickerOption,
+                queryBuilderState.graphManagerState.graph,
+                queryBuilderState.observerContext,
+              ),
+            );
+      }
+      setDatePickerOption(chosenDatePickerOption);
+    };
     const deleteDisabled = isReadOnly || isVariableUsed;
     const deleteTitle = isVariableUsed ? 'Used in query' : 'Remove';
     const editVariable = (): void => {
@@ -247,9 +343,38 @@ export const VariableViewer = observer(
                       <div className="query-builder__variables__variable__type__label query-builder__variables__variable__type__label--milestoning">
                         milestoning
                       </div>
-                      <div className="query-builder__constants__value">
+                      <button
+                        className="query-builder__constants__value"
+                        onClick={openCustomDatePickerPopover}
+                      >
                         {milestoningParameterValueString}
-                      </div>
+                      </button>
+                      <BasePopover
+                        open={Boolean(anchorEl)}
+                        TransitionProps={{
+                          onEnter: handleEnter,
+                        }}
+                        anchorEl={anchorEl}
+                        onClose={closeCustomDatePickerPopover}
+                        anchorOrigin={{
+                          vertical: 20,
+                          horizontal: 50,
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'center',
+                        }}
+                      >
+                        <BaseRadioGroup
+                          className="value-spec-editor__date-picker__options"
+                          value={datePickerOption.value}
+                          onChange={handleDatePickerOptionChange}
+                          row={true}
+                          options={targetDateOptionsEnum}
+                          size={2}
+                        />
+                        {renderChildrenDateComponents()}
+                      </BasePopover>
                     </>
                   )}
                 </div>

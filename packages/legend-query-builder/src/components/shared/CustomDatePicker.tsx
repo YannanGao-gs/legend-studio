@@ -125,7 +125,7 @@ enum CUSTOM_DATE_OPTION_REFERENCE_MOMENT {
 /**
  * DatePickerOption is the base class being used to display and generate the corresponding pure date function.
  */
-class DatePickerOption {
+export class DatePickerOption {
   /**
    * label is the text that shows up in the valueSpecification box.
    */
@@ -212,7 +212,7 @@ class CustomPreviousDayOfWeekOption extends DatePickerOption {
   }
 }
 
-const reservedCustomDateOptions: CustomDateOption[] = [
+export const reservedCustomDateOptions: CustomDateOption[] = [
   new CustomDateOption(
     'Yesterday',
     CUSTOM_DATE_PICKER_OPTION.YESTERDAY,
