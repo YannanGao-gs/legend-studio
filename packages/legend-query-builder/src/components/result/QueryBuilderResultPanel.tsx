@@ -44,6 +44,7 @@ import {
   ReportIcon,
   CubesLoadingIndicatorIcon,
   CubesLoadingIndicator,
+  InfoCircleIcon,
 } from '@finos/legend-art';
 import { observer } from 'mobx-react-lite';
 import { flowResult } from 'mobx';
@@ -355,6 +356,8 @@ export const QueryBuilderResultPanel = observer(
     const isLoading =
       resultState.isRunningQuery || resultState.isGeneratingPlan;
 
+    console.log(executionResult);
+
     return (
       <div
         data-testid={QUERY_BUILDER_TEST_ID.QUERY_BUILDER_RESULT_PANEL}
@@ -433,6 +436,23 @@ export const QueryBuilderResultPanel = observer(
                 </div>
                 <div className="query-builder__result__stale-status__label">
                   Preview data might be stale
+                </div>
+              </div>
+            )}
+            {executionResult && resultState.checkForStaleResults && (
+              <div className="query-builder__result__stale-status">
+                <div className="query-builder__result__stale-status__icon">
+                  <ExclamationTriangleIcon />
+                </div>
+                <div className="query-builder__result__stale-status__label">
+                  Data below is not complete - query produces more than the set
+                  grid preview limit
+                </div>
+                <div
+                  className="query-builder-explorer-tree__node__action query-builder-explorer-tree__node__info"
+                  title="All incoming remote revisions since last syncing of workspace"
+                >
+                  <InfoCircleIcon />
                 </div>
               </div>
             )}
