@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ContextMenu, clsx } from '@finos/legend-art';
+import { ContextMenu, ExclamationTriangleIcon, clsx } from '@finos/legend-art';
 import { observer } from 'mobx-react-lite';
 import type { QueryBuilderState } from '../../../stores/QueryBuilderState.js';
 import {
@@ -23,8 +23,9 @@ import {
   TDSExecutionResult,
 } from '@finos/legend-graph';
 import {
-  DataGrid,
   type DataGridColumnDefinition,
+  type DataGridIHeaderParams,
+  DataGrid,
 } from '@finos/legend-lego/data-grid';
 import {
   getRowDataFromExecutionResult,
@@ -47,28 +48,150 @@ import type {
   QueryBuilderTDSRowDataType,
 } from '../../../stores/QueryBuilderResultState.js';
 import { QUERY_BUILDER_TEST_ID } from '../../../__lib__/QueryBuilderTesting.js';
+import { useRef, useEffect, useState } from 'react';
 
-export const getFloatGridColumnCustomHeader = (
-  columnName: string,
-): string => ` <div data-testid="query__builder__result__grid__custom-header" class="query-builder__result__values__table__custom-header">
-              <div>${columnName}</div>
-              <div
-                class="query-builder__result__stale-status__icon"
-                title="some values have been rounded using en-us format in this preview grid (defaults to max 4 decimal places)"
-              >
-                <svg
-                  stroke="currentColor"
-                  fill="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 576 512"
-                  height="1em"
-                  width="1em"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"></path>
-                </svg>
-              </div>
-            </div>`;
+const CustomHeader: React.FC<DataGridIHeaderParams> = (props) => {
+  const {
+    displayName,
+    enableSorting,
+    enableMenu,
+    showColumnMenu,
+    progressSort,
+    column,
+  } = props;
+
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const headerElement = headerRef.current;
+
+    if (headerElement) {
+      // Add your custom icon next to the column header text
+      const customIcon = document.createElement('span');
+      customIcon.className = 'query-builder__result__stale-status__icon'; // Add your own className
+      customIcon.innerHTML =
+        '<div className="query-builder__result__stale-status__icon"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 576 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"></path></svg> </div>';
+
+      // Find the header cell label container and append the custom icon
+      const labelContainer = headerElement.querySelector(
+        '.ag-header-cell-label',
+      );
+      if (labelContainer) {
+        labelContainer.appendChild(customIcon);
+      }
+    }
+  }, []);
+
+  // Handler for sorting click
+  const handleSortClick = () => {
+    if (enableSorting) {
+      progressSort();
+    }
+  };
+
+  // Manage the sorting state
+  const [sortDirection, setSortDirection] = useState<string | null>(null);
+
+  // Effect to sync with the column sort state
+  useEffect(() => {
+    setSortDirection(column.getColDef().sort || null);
+  }, [column]);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (enableMenu) {
+      showColumnMenu(event.currentTarget);
+    }
+  };
+
+  return (
+    <div
+      className="ag-header-cell-comp-wrapper"
+      role="presentation"
+      ref={headerRef}
+    >
+      <div
+        className={`ag-cell-label-container ${
+          sortDirection === 'asc'
+            ? 'ag-header-cell-sorted-asc'
+            : sortDirection === 'desc'
+              ? 'ag-header-cell-sorted-desc'
+              : 'ag-header-cell-sorted-none'
+        }`}
+        role="presentation"
+      >
+        <span
+          data-ref="eMenu"
+          className="ag-header-icon ag-header-cell-menu-button ag-header-menu-icon ag-header-menu-always-show"
+          aria-hidden="true"
+          onClick={handleMenuClick}
+        >
+          <span
+            className="ag-icon ag-icon-menu-alt"
+            unselectable="on"
+            role="presentation"
+          ></span>
+        </span>
+        <div
+          data-ref="eLabel"
+          className="ag-header-cell-label"
+          role="presentation"
+        >
+          <span
+            data-ref="eText"
+            className="ag-header-cell-text"
+            onClick={handleSortClick}
+          >
+            {displayName}
+          </span>
+          <span
+            data-ref="eSortIndicator"
+            className="ag-sort-indicator-container"
+          >
+            <span
+              data-ref="eSortAsc"
+              className={`ag-sort-indicator-icon ag-sort-ascending-icon ${sortDirection === 'asc' ? '' : 'ag-hidden'}`}
+              aria-hidden="true"
+            >
+              <span
+                className="ag-icon ag-icon-asc"
+                unselectable="on"
+                role="presentation"
+              ></span>
+            </span>
+            <span
+              data-ref="eSortDesc"
+              className={`ag-sort-indicator-icon ag-sort-descending-icon ${sortDirection === 'desc' ? '' : 'ag-hidden'}`}
+              aria-hidden="true"
+            >
+              <span
+                className="ag-icon ag-icon-desc"
+                unselectable="on"
+                role="presentation"
+              ></span>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+    // <div classNameName="ag-header-cell" ref={headerRef}>
+    //   <div classNameName="ag-header-cell-label">
+    //     <span
+    //       classNameName="ag-header-cell-text"
+    //       onClick={handleSortClick}
+    //       style={{ cursor: enableSorting ? 'pointer' : 'default' }}
+    //     >
+    //       {displayName}
+    //     </span>
+    //     {enableMenu && (
+    //       <div classNameName="ag-header-cell-menu-button" onClick={handleMenuClick}>
+    //         <span classNameName="ag-icon ag-icon-menu"></span>
+    //       </div>
+    //     )}
+    //     {/* The built-in sorting icons will be placed here automatically by AG Grid */}
+    //   </div>
+    // </div>
+  );
+};
 
 const getTDSColumnCustomizations = (
   result: TDSExecutionResult,
@@ -80,8 +203,9 @@ const getTDSColumnCustomizations = (
   switch (columnType) {
     case PRIMITIVE_TYPE.FLOAT:
       return {
+        headerComponent: 'customHeader',
         headerComponentParams: {
-          template: getFloatGridColumnCustomHeader(columnName),
+          displayName: columnName,
         },
       };
     default:
@@ -445,6 +569,9 @@ export const QueryBuilderTDSSimpleGridResult = observer(
             suppressFieldDotNotation={true}
             suppressContextMenu={false}
             columnDefs={colDefs}
+            components={{
+              customHeader: CustomHeader,
+            }}
           />
         </div>
       </div>

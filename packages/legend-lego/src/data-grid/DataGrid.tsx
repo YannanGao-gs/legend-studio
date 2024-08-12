@@ -39,6 +39,7 @@ import {
   type GetContextMenuItemsParams,
   type MenuItemDef,
   type IAggFuncParams,
+  type IHeaderParams,
   ModuleRegistry,
 } from '@ag-grid-community/core';
 import { LicenseManager } from '@ag-grid-enterprise/core';
@@ -101,4 +102,5 @@ export type {
   GetContextMenuItemsParams as DataGridGetContextMenuItemsParams,
   MenuItemDef as DataGridMenuItemDef,
   IAggFuncParams as DataGridIAggFuncParams,
+  IHeaderParams as DataGridIHeaderParams,
 };
