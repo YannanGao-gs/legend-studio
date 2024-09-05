@@ -451,6 +451,7 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
             projectInfo.artifactId,
             resolveVersion(projectInfo.versionId),
           ),
+          buildMinimalGraphOnly: true,
         },
         graphReport,
       );

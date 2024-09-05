@@ -893,21 +893,20 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
                     ),
                   );
                 }
-                if (option) {
-                  await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraphForQuery(
-                    graph,
-                    graphEntities,
-                    ActionState.create(),
-                  );
-                } else {
-                  await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraphForQuery(
-                    graph,
-                    graphEntities,
-                    ActionState.create(),
-                    option,
-                    graph_buildReport,
-                  );
-                }
+                await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraphForQuery(
+                  graph,
+                  graphEntities,
+                  ActionState.create(),
+                  option
+                    ? {
+                        buildMinimalGraphOnly: true,
+                      }
+                    : {
+                        origin: option,
+                        buildMinimalGraphOnly: true,
+                      },
+                  graph_buildReport,
+                );
                 dataSpaceQueryBuilderState.graphManagerState.graph = graph;
                 const dependency_buildReport = createGraphBuilderReport();
                 // report
