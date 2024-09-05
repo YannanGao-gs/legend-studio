@@ -35,9 +35,9 @@ import {
   parseGACoordinates,
 } from '@finos/legend-storage';
 import {
+  type QueryPersistConfiguration,
   QueryBuilderActionConfig_QueryApplication,
   QueryEditorStore,
-  type QueryPersistConfiguration,
 } from '../QueryEditorStore.js';
 import type { LegendQueryApplicationStore } from '../LegendQueryBaseStore.js';
 import {
@@ -167,11 +167,12 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
         this.versionId,
         undefined,
       ),
-      (dataSpaceInfo: DataSpaceInfo) => {
+      async (dataSpaceInfo: DataSpaceInfo) => {
         this.applicationStore.notificationService.notifyWarning(
           `Can't switch data space to visit current template query`,
         );
       },
+      false,
       dataSpaceAnalysisResult,
       undefined,
       undefined,
@@ -180,7 +181,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
       sourceInfo,
     );
     queryBuilderState.setExecutionContext(executionContext);
-    queryBuilderState.propagateExecutionContextChange(executionContext);
+    await queryBuilderState.propagateExecutionContextChange();
     queryBuilderState.initializeWithQuery(query);
     return queryBuilderState;
   }

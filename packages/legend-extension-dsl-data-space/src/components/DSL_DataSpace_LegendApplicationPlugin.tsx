@@ -15,11 +15,11 @@
  */
 
 import {
-  LegendApplicationPlugin,
   type LegendApplicationSetup,
   type LegendApplicationPluginManager,
-  collectKeyedCommandConfigEntriesFromConfig,
   type KeyedCommandConfigEntry,
+  collectKeyedCommandConfigEntriesFromConfig,
+  LegendApplicationPlugin,
 } from '@finos/legend-application';
 import packageJson from '../../package.json' with { type: 'json' };
 import type {
@@ -175,10 +175,10 @@ export class DSL_DataSpace_LegendApplicationPlugin
           }
           return [];
         },
-        loadCuratedTemplateQuery: (
+        loadCuratedTemplateQuery: async (
           templateQuery: CuratedTemplateQuery,
           queryBuilderState: QueryBuilderState,
-        ): void => {
+        ): Promise<void> => {
           if (queryBuilderState instanceof DataSpaceQueryBuilderState) {
             if (
               queryBuilderState.executionContext.name !==
@@ -190,9 +190,7 @@ export class DSL_DataSpace_LegendApplicationPlugin
                 );
               if (executionContext) {
                 queryBuilderState.setExecutionContext(executionContext);
-                queryBuilderState.propagateExecutionContextChange(
-                  executionContext,
-                );
+                await queryBuilderState.propagateExecutionContextChange();
                 queryBuilderState.initializeWithQuery(templateQuery.query);
                 queryBuilderState.onExecutionContextChange?.(executionContext);
               }

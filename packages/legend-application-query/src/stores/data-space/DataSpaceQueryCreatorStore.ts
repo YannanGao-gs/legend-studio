@@ -22,14 +22,18 @@ import {
   RuntimePointer,
   PackageableElementExplicitReference,
   QueryProjectCoordinates,
+  createGraphBuilderReport,
+  GRAPH_MANAGER_EVENT,
 } from '@finos/legend-graph';
 import {
   type DepotServerClient,
   StoreProjectData,
   LATEST_VERSION_ALIAS,
+  retrieveProjectEntitiesWithDependencies,
 } from '@finos/legend-server-depot';
 import {
   LogEvent,
+  StopWatch,
   assertErrorThrown,
   assertTrue,
   guaranteeNonNullable,
@@ -182,6 +186,10 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
     super.initialize();
   }
 
+  override requiresGraphBuilding(): boolean {
+    return false;
+  }
+
   async initializeQueryBuilderState(): Promise<QueryBuilderState> {
     if (this.queryableDataSpace) {
       return this.initializeQueryBuilderStateWithQueryableDataSpace(
@@ -277,6 +285,81 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
   async initializeQueryBuilderStateWithQueryableDataSpace(
     queryableDataSpace: QueryableDataSpace,
   ): Promise<QueryBuilderState> {
+    let dataSpaceAnalysisResult;
+    let isLightGraphEnabled = true;
+    try {
+      const stopWatch = new StopWatch();
+      const project = StoreProjectData.serialization.fromJson(
+        await this.depotServerClient.getProject(
+          queryableDataSpace.groupId,
+          queryableDataSpace.artifactId,
+        ),
+      );
+      this.initState.setMessage('Fetching dataspace analysis result');
+      // initialize system
+      stopWatch.record();
+      await this.graphManagerState.initializeSystem();
+      stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH_SYSTEM__SUCCESS);
+
+      const graph_buildReport = createGraphBuilderReport();
+      const dependency_buildReport = createGraphBuilderReport();
+      dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
+        this.graphManagerState.graphManager,
+      ).analyzeDataSpaceCoverage(
+        queryableDataSpace.dataSpacePath,
+        () =>
+          retrieveProjectEntitiesWithDependencies(
+            project,
+            queryableDataSpace.versionId,
+            this.depotServerClient,
+          ),
+        () =>
+          retrieveAnalyticsResultCache(
+            project,
+            queryableDataSpace.versionId,
+            queryableDataSpace.dataSpacePath,
+            this.depotServerClient,
+          ),
+        undefined,
+        graph_buildReport,
+        this.graphManagerState.graph,
+        queryableDataSpace.executionContext,
+        undefined,
+        this.getProjectInfo(),
+        this.applicationStore.notificationService,
+      );
+      const mappingPath = dataSpaceAnalysisResult.executionContextsIndex.get(
+        queryableDataSpace.executionContext,
+      )?.mapping;
+      if (mappingPath) {
+        // report
+        stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
+        const graphBuilderReportData = {
+          timings:
+            this.applicationStore.timeService.finalizeTimingsRecord(stopWatch),
+          dependencies: dependency_buildReport,
+          dependenciesCount:
+            this.graphManagerState.graph.dependencyManager.numberOfDependencies,
+          graph: graph_buildReport,
+        };
+        this.applicationStore.logService.info(
+          LogEvent.create(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS),
+          graphBuilderReportData,
+        );
+      } else {
+        isLightGraphEnabled = false;
+        this.graphManagerState.graph = this.graphManagerState.createNewGraph();
+        await flowResult(this.buildFullGraph());
+      }
+    } catch (error) {
+      this.applicationStore.logService.error(
+        LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
+        error,
+      );
+      this.graphManagerState.graph = this.graphManagerState.createNewGraph();
+      isLightGraphEnabled = false;
+      await flowResult(this.buildFullGraph());
+    }
     const dataSpace = getDataSpace(
       queryableDataSpace.dataSpacePath,
       this.graphManagerState.graph,
@@ -287,27 +370,6 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
       ),
       `Can't find execution context '${queryableDataSpace.executionContext}'`,
     );
-    let dataSpaceAnalysisResult;
-    try {
-      const project = StoreProjectData.serialization.fromJson(
-        await this.depotServerClient.getProject(
-          queryableDataSpace.groupId,
-          queryableDataSpace.artifactId,
-        ),
-      );
-      dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
-        this.graphManagerState.graphManager,
-      ).retrieveDataSpaceAnalysisFromCache(() =>
-        retrieveAnalyticsResultCache(
-          project,
-          queryableDataSpace.versionId,
-          dataSpace.path,
-          this.depotServerClient,
-        ),
-      );
-    } catch {
-      // do nothing
-    }
     const sourceInfo = {
       groupId: queryableDataSpace.groupId,
       artifactId: queryableDataSpace.artifactId,
@@ -333,11 +395,12 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
         (dataSpaceInfo: DataSpaceInfo) =>
           hasDataSpaceInfoBeenVisited(dataSpaceInfo, visitedDataSpaces),
       ),
-      (dataSpaceInfo: DataSpaceInfo) => {
+      async (dataSpaceInfo: DataSpaceInfo) => {
         flowResult(this.changeDataSpace(dataSpaceInfo)).catch(
           this.applicationStore.alertUnhandledError,
         );
       },
+      isLightGraphEnabled,
       dataSpaceAnalysisResult,
       (ec: DataSpaceExecutionContext) => {
         returnUndefOnError(() =>
@@ -361,7 +424,7 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
       );
     }
     queryBuilderState.setExecutionContext(executionContext);
-    queryBuilderState.propagateExecutionContextChange(executionContext);
+    await queryBuilderState.propagateExecutionContextChange(true);
 
     // set runtime if already chosen
     if (queryableDataSpace.runtimePath) {
@@ -415,6 +478,10 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
       this.onInitializeFailure();
       this.initState.fail();
     }
+  }
+
+  override *buildGraph(): GeneratorFn<void> {
+    // do nothing
   }
 
   addVisitedDataSpace(queryableDataSpace: QueryableDataSpace): void {

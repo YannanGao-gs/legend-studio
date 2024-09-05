@@ -36,6 +36,7 @@ import {
   getExecutionContextFromDataspaceExecutable,
   getQueryFromDataspaceExecutable,
 } from '../../graph-manager/DSL_DataSpace_GraphManagerHelper.js';
+import { flowResult } from 'mobx';
 
 const DataSpaceTemplateQueryDialog = observer(
   (props: {
@@ -49,7 +50,9 @@ const DataSpaceTemplateQueryDialog = observer(
       queryBuilderState.setTemplateQueryDialogOpen(false);
     };
 
-    const loadTemplateQuery = (template: DataSpaceExecutable): void => {
+    const loadTemplateQuery = async (
+      template: DataSpaceExecutable,
+    ): Promise<void> => {
       const executionContext = getExecutionContextFromDataspaceExecutable(
         queryBuilderState.dataSpace,
         template,
@@ -75,7 +78,7 @@ const DataSpaceTemplateQueryDialog = observer(
           queryBuilderState.executionContext.hashCode
       ) {
         queryBuilderState.setExecutionContext(executionContext);
-        queryBuilderState.propagateExecutionContextChange(executionContext);
+        await queryBuilderState.propagateExecutionContextChange();
         queryBuilderState.initializeWithQuery(query);
         queryBuilderState.onExecutionContextChange?.(executionContext);
       } else if (query) {
@@ -84,7 +87,7 @@ const DataSpaceTemplateQueryDialog = observer(
       handleClose();
     };
 
-    const loadQuery = (template: DataSpaceExecutable): void => {
+    const loadQuery = async (template: DataSpaceExecutable): Promise<void> => {
       if (queryBuilderState.changeDetectionState.hasChanged) {
         applicationStore.alertService.setActionAlertInfo({
           message:
@@ -94,7 +97,11 @@ const DataSpaceTemplateQueryDialog = observer(
             {
               label: 'Proceed',
               type: ActionAlertActionType.PROCEED_WITH_CAUTION,
-              handler: (): void => loadTemplateQuery(template),
+              handler: (): void => {
+                loadTemplateQuery(template).catch(
+                  applicationStore.alertUnhandledError,
+                );
+              },
             },
             {
               label: 'Abort',
@@ -104,7 +111,7 @@ const DataSpaceTemplateQueryDialog = observer(
           ],
         });
       } else {
-        loadTemplateQuery(template);
+        flowResult(loadTemplateQuery(template));
       }
     };
 
@@ -157,7 +164,9 @@ const DataSpaceTemplateQueryDialog = observer(
                   <button
                     className="query-builder__data-space__template-query-panel__query__entry"
                     title="click to load template query"
-                    onClick={() => loadQuery(query)}
+                    onClick={() => {
+                      flowResult(loadQuery(query));
+                    }}
                   >
                     <div className="query-builder__data-space__template-query-panel__query__entry__content">
                       <div className="query-builder__data-space__template-query-panel__query__entry__content__title">

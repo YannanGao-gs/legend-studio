@@ -15,9 +15,10 @@
  */
 
 import {
+  type QueryGraphBuilderGetter,
+  type QuerySetupActionConfiguration,
   LegendQueryApplicationPlugin,
   QuerySetupActionTag,
-  type QuerySetupActionConfiguration,
 } from '../stores/LegendQueryApplicationPlugin.js';
 import packageJson from '../../package.json' with { type: 'json' };
 import type { QuerySetupLandingPageStore } from '../stores/QuerySetupStore.js';
@@ -50,10 +51,10 @@ import {
   LEGEND_QUERY_ROUTE_PATTERN,
 } from '../__lib__/LegendQueryNavigation.js';
 import {
-  ActionAlertActionType,
-  ActionAlertType,
   type ApplicationPageEntry,
   type LegendApplicationSetup,
+  ActionAlertActionType,
+  ActionAlertType,
 } from '@finos/legend-application';
 import { CloneQueryServiceSetup } from './CloneQueryServiceSetup.js';
 import { QueryProductionizerSetup } from './QueryProductionizerSetup.js';
@@ -68,27 +69,60 @@ import {
   generateDataSpaceQuerySetupRoute,
 } from '../__lib__/DSL_DataSpace_LegendQueryNavigation.js';
 import {
-  QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS,
+  type QueryBuilderState,
   type QueryBuilderHeaderActionConfiguration,
   type QueryBuilderMenuActionConfiguration,
+  type QueryBuilderPropagateExecutionContextChangeHelper,
+  QUERY_BUILDER_SUPPORTED_GET_ALL_FUNCTIONS,
 } from '@finos/legend-query-builder';
 import {
+  type QueryEditorStore,
   ExistingQueryEditorStore,
   QueryBuilderActionConfig_QueryApplication,
 } from '../stores/QueryEditorStore.js';
 import {
   DataSpaceQueryBuilderState,
+  DataSpacesDepotRepository,
   generateDataSpaceTemplateQueryPromotionRoute,
 } from '@finos/legend-extension-dsl-data-space/application';
-import { RuntimePointer } from '@finos/legend-graph';
+import {
+  createGraphBuilderReport,
+  GRAPH_MANAGER_EVENT,
+  isValidFullPath,
+  LegendSDLC,
+  QUERY_PROFILE_PATH,
+  resolvePackagePathAndElementName,
+  RuntimePointer,
+  V1_EngineRuntime,
+  V1_Mapping,
+  V1_PackageableRuntime,
+  V1_PureGraphManager,
+} from '@finos/legend-graph';
 import { LegendQueryTelemetryHelper } from '../__lib__/LegendQueryTelemetryHelper.js';
-import { StoreProjectData } from '@finos/legend-server-depot';
-import { buildUrl } from '@finos/legend-shared';
+import { resolveVersion, StoreProjectData } from '@finos/legend-server-depot';
+import {
+  type GeneratorFn,
+  ActionState,
+  assertErrorThrown,
+  buildUrl,
+  getNullableFirstEntry,
+  guaranteeNonNullable,
+  guaranteeType,
+  LogEvent,
+  StopWatch,
+  uniq,
+} from '@finos/legend-shared';
 import { parseProjectIdentifier } from '@finos/legend-storage';
 import { QueryEditorExistingQueryHeader } from './QueryEditor.js';
 import { DataSpaceTemplateQueryCreatorStore } from '../stores/data-space/DataSpaceTemplateQueryCreatorStore.js';
 import { createViewSDLCProjectHandler } from '../stores/data-space/DataSpaceQueryBuilderHelper.js';
 import { DataSpaceQueryCreatorStore } from '../stores/data-space/DataSpaceQueryCreatorStore.js';
+import {
+  QUERY_PROFILE_TAG_DATA_SPACE,
+  resolveUsableDataSpaceClasses,
+} from '@finos/legend-extension-dsl-data-space/graph';
+import { flowResult } from 'mobx';
+import { LEGEND_QUERY_APP_EVENT } from '../__lib__/LegendQueryEvent.js';
 
 export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlugin {
   static NAME = packageJson.extensions.applicationQueryPlugin;
@@ -726,5 +760,224 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
         return undefined;
       },
     };
+  }
+
+  override getExtraQueryGraphBuilderGetters(): QueryGraphBuilderGetter[] {
+    return [
+      (
+        editorStore: QueryEditorStore,
+      ): ((editorStore: QueryEditorStore) => GeneratorFn<void>) | undefined => {
+        function* buildGraph(): GeneratorFn<void> {
+          // do nothing
+        }
+        if (editorStore instanceof ExistingQueryEditorStore) {
+          const query = editorStore.query;
+          const dataSpaceTaggedValue = query?.taggedValues?.find(
+            (taggedValue) =>
+              taggedValue.profile === QUERY_PROFILE_PATH &&
+              taggedValue.tag === QUERY_PROFILE_TAG_DATA_SPACE &&
+              isValidFullPath(taggedValue.value),
+          );
+          if (dataSpaceTaggedValue) {
+            return buildGraph;
+          }
+        }
+        return undefined;
+      },
+    ];
+  }
+
+  getExtraQueryBuilderPropagateExecutionContextChangeHelper?(): QueryBuilderPropagateExecutionContextChangeHelper[] {
+    return [
+      (
+        queryBuilderState: QueryBuilderState,
+        isGraphBuildingNotRequired?: boolean,
+      ): (() => Promise<void>) | undefined => {
+        /**
+         * Propagation after changing the execution context:
+         * - The mapping will be updated to the mapping of the execution context
+         * - The runtime will be updated to the default runtime of the execution context
+         * - If no class is chosen, try to choose a compatible class
+         * - If the chosen class is compatible with the new selected execution context mapping, do nothing, otherwise, try to choose a compatible class
+         */
+        const propagateExecutionContextChange = async (): Promise<void> => {
+          const dataSpaceQueryBuilderState = guaranteeType(
+            queryBuilderState,
+            DataSpaceQueryBuilderState,
+          );
+          const mapping =
+            dataSpaceQueryBuilderState.executionContext.mapping.value;
+          const mappingModelCoverageAnalysisResult =
+            dataSpaceQueryBuilderState.dataSpaceAnalysisResult?.executionContextsIndex.get(
+              dataSpaceQueryBuilderState.executionContext.name,
+            )?.mappingModelCoverageAnalysisResult;
+          const editorStore = (
+            queryBuilderState.workflowState
+              .actionConfig as QueryBuilderActionConfig_QueryApplication
+          ).editorStore;
+          if (
+            dataSpaceQueryBuilderState.dataSpaceAnalysisResult &&
+            mappingModelCoverageAnalysisResult
+          ) {
+            if (!isGraphBuildingNotRequired) {
+              try {
+                const stopWatch = new StopWatch();
+                const graph =
+                  dataSpaceQueryBuilderState.graphManagerState.createNewGraph();
+                const graph_buildReport = createGraphBuilderReport();
+                // Create dummy mappings and runtimes
+                // TODO?: these stubbed mappings and runtimes are not really useful that useful, so either we should
+                // simplify the model here or potentially refactor the backend analytics endpoint to return these as model
+                const mappingModels = uniq(
+                  Array.from(
+                    dataSpaceQueryBuilderState.dataSpaceAnalysisResult.executionContextsIndex.values(),
+                  ).map((context) => context.mapping),
+                ).map((m) => {
+                  const _mapping = new V1_Mapping();
+                  const [packagePath, name] = resolvePackagePathAndElementName(
+                    m.path,
+                  );
+                  _mapping.package = packagePath;
+                  _mapping.name = name;
+                  return guaranteeType(
+                    dataSpaceQueryBuilderState.graphManagerState.graphManager,
+                    V1_PureGraphManager,
+                  ).elementProtocolToEntity(_mapping);
+                });
+                const runtimeModels = uniq(
+                  Array.from(
+                    dataSpaceQueryBuilderState.dataSpaceAnalysisResult.executionContextsIndex.values(),
+                  )
+                    .map((context) => context.defaultRuntime)
+                    .concat(
+                      Array.from(
+                        dataSpaceQueryBuilderState.dataSpaceAnalysisResult.executionContextsIndex.values(),
+                      ).flatMap((val) => val.compatibleRuntimes),
+                    ),
+                ).map((r) => {
+                  const runtime = new V1_PackageableRuntime();
+                  const [packagePath, name] = resolvePackagePathAndElementName(
+                    r.path,
+                  );
+                  runtime.package = packagePath;
+                  runtime.name = name;
+                  runtime.runtimeValue = new V1_EngineRuntime();
+                  return guaranteeType(
+                    dataSpaceQueryBuilderState.graphManagerState.graphManager,
+                    V1_PureGraphManager,
+                  ).elementProtocolToEntity(runtime);
+                });
+                const graphEntities = guaranteeNonNullable(
+                  mappingModelCoverageAnalysisResult.entities,
+                )
+                  .concat(mappingModels)
+                  .concat(runtimeModels)
+                  // NOTE: if an element could be found in the graph already it means it comes from system
+                  // so we could rid of it
+                  .filter(
+                    (el) =>
+                      !graph.getNullableElement(el.path, false) &&
+                      !el.path.startsWith('meta::'),
+                  );
+                let option;
+                if (
+                  dataSpaceQueryBuilderState.dataSpaceRepo instanceof
+                  DataSpacesDepotRepository
+                ) {
+                  option = new LegendSDLC(
+                    dataSpaceQueryBuilderState.dataSpaceRepo.project.groupId,
+                    dataSpaceQueryBuilderState.dataSpaceRepo.project.artifactId,
+                    resolveVersion(
+                      dataSpaceQueryBuilderState.dataSpaceRepo.project
+                        .versionId,
+                    ),
+                  );
+                }
+                if (option) {
+                  await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraphForQuery(
+                    graph,
+                    graphEntities,
+                    ActionState.create(),
+                  );
+                } else {
+                  await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraphForQuery(
+                    graph,
+                    graphEntities,
+                    ActionState.create(),
+                    option,
+                    graph_buildReport,
+                  );
+                }
+                dataSpaceQueryBuilderState.graphManagerState.graph = graph;
+                const dependency_buildReport = createGraphBuilderReport();
+                // report
+                stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
+                const graphBuilderReportData = {
+                  timings:
+                    dataSpaceQueryBuilderState.applicationStore.timeService.finalizeTimingsRecord(
+                      stopWatch,
+                    ),
+                  dependencies: dependency_buildReport,
+                  dependenciesCount:
+                    dataSpaceQueryBuilderState.graphManagerState.graph
+                      .dependencyManager.numberOfDependencies,
+                  graph: graph_buildReport,
+                };
+                editorStore.logBuildGraphMetrics(graphBuilderReportData);
+                dataSpaceQueryBuilderState.applicationStore.logService.info(
+                  LogEvent.create(
+                    GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS,
+                  ),
+                  graphBuilderReportData,
+                );
+              } catch (error) {
+                assertErrorThrown(error);
+                editorStore.applicationStore.logService.error(
+                  LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
+                  error,
+                );
+                editorStore.graphManagerState.graph =
+                  editorStore.graphManagerState.createNewGraph();
+                await flowResult(editorStore.buildFullGraph());
+              }
+            }
+            dataSpaceQueryBuilderState.explorerState.mappingModelCoverageAnalysisResult =
+              mappingModelCoverageAnalysisResult;
+          }
+          const compatibleClasses = resolveUsableDataSpaceClasses(
+            dataSpaceQueryBuilderState.dataSpace,
+            mapping,
+            dataSpaceQueryBuilderState.graphManagerState,
+            dataSpaceQueryBuilderState,
+          );
+          dataSpaceQueryBuilderState.changeMapping(mapping);
+          dataSpaceQueryBuilderState.changeRuntime(
+            new RuntimePointer(
+              dataSpaceQueryBuilderState.executionContext.defaultRuntime,
+            ),
+          );
+          // if there is no chosen class or the chosen one is not compatible
+          // with the mapping then pick a compatible class if possible
+          if (
+            !dataSpaceQueryBuilderState.class ||
+            !compatibleClasses.includes(dataSpaceQueryBuilderState.class)
+          ) {
+            const possibleNewClass = getNullableFirstEntry(compatibleClasses);
+            if (possibleNewClass) {
+              dataSpaceQueryBuilderState.changeClass(possibleNewClass);
+            }
+          }
+          dataSpaceQueryBuilderState.explorerState.refreshTreeData();
+        };
+        if (
+          queryBuilderState instanceof DataSpaceQueryBuilderState &&
+          queryBuilderState.workflowState.actionConfig instanceof
+            QueryBuilderActionConfig_QueryApplication
+        ) {
+          return propagateExecutionContextChange;
+        }
+        return undefined;
+      },
+    ];
   }
 }
