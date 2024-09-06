@@ -84,7 +84,7 @@ export const resolveUsableDataSpaceClasses = (
   graphManagerState: GraphManagerState,
   queryBuilderState?: DataSpaceQueryBuilderState,
 ): Class[] => {
-  const compatibleClasses = getMappingCompatibleClasses(
+  let compatibleClasses = getMappingCompatibleClasses(
     mapping,
     graphManagerState.usableClasses,
   );
@@ -92,6 +92,24 @@ export const resolveUsableDataSpaceClasses = (
     queryBuilderState?.dataSpaceAnalysisResult?.executionContextsIndex.get(
       queryBuilderState.executionContext.name,
     )?.mappingModelCoverageAnalysisResult;
+  if (
+    // This check is to make sure that we have `info` field present in `MappedEntity` which
+    // contains information about the mapped class path
+    mappingModelCoverageAnalysisResult?.mappedEntities.some(
+      (m) => m.info !== undefined,
+    )
+  ) {
+    const compatibleClassPaths =
+      mappingModelCoverageAnalysisResult.mappedEntities.map(
+        (e) => e.info?.classPath,
+      );
+    const uniqueCompatibleClasses = compatibleClassPaths.filter(
+      (val, index) => compatibleClassPaths.indexOf(val) === index,
+    );
+    compatibleClasses = graphManagerState.graph.classes.filter((c) =>
+      uniqueCompatibleClasses.includes(c.path),
+    );
+  }
   if (dataSpace.elements?.length) {
     const elements = dataSpace.elements;
     return compatibleClasses.filter((_class) => {
@@ -106,23 +124,6 @@ export const resolveUsableDataSpaceClasses = (
       }
       return !_classElements[0]?.exclude;
     });
-  } else if (
-    // This check is to make sure that we have `info` field present in `MappedEntity` which
-    // contains information about the mapped class path
-    mappingModelCoverageAnalysisResult?.mappedEntities.some(
-      (m) => m.info !== undefined,
-    )
-  ) {
-    const compatibleClassPaths =
-      mappingModelCoverageAnalysisResult.mappedEntities.map(
-        (e) => e.info?.classPath,
-      );
-    const uniqueCompatibleClasses = compatibleClassPaths.filter(
-      (val, index) => compatibleClassPaths.indexOf(val) === index,
-    );
-    return graphManagerState.graph.classes.filter((c) =>
-      uniqueCompatibleClasses.includes(c.path),
-    );
   }
   return compatibleClasses;
 };
