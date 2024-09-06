@@ -1354,8 +1354,8 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
               undefined,
               graph_buildReport,
               this.graphManagerState.graph,
+              matchingExecutionContext.name,
               undefined,
-              query.mapping,
               this.getProjectInfo(),
               this.applicationStore.notificationService,
             );

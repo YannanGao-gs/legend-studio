@@ -885,7 +885,7 @@ export class V1_PureGraphManager extends AbstractPureGraphManager {
         GRAPH_MANAGER_EVENT.GRAPH_BUILDER_BUILD_OTHER_ELEMENTS__SUCCESS,
       );
 
-      if (options?.origin) {
+      if (options?.origin && !graph.origin) {
         graph.setOrigin(options.origin);
       }
       buildState.pass();
