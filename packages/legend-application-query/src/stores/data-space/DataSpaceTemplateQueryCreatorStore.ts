@@ -18,14 +18,23 @@ import {
   type Query,
   type QuerySearchSpecification,
   type RawLambda,
+  GRAPH_MANAGER_EVENT,
   QueryProjectCoordinates,
+  createGraphBuilderReport,
   extractElementNameFromPath,
 } from '@finos/legend-graph';
 import {
   type DepotServerClient,
+  retrieveProjectEntitiesWithDependencies,
   StoreProjectData,
 } from '@finos/legend-server-depot';
-import { IllegalStateError, uuid } from '@finos/legend-shared';
+import {
+  IllegalStateError,
+  LogEvent,
+  StopWatch,
+  uuid,
+  type GeneratorFn,
+} from '@finos/legend-shared';
 import {
   type QueryBuilderState,
   QueryBuilderDataBrowserWorkflow,
@@ -55,12 +64,15 @@ import {
   createQueryDataSpaceTaggedValue,
 } from '@finos/legend-extension-dsl-data-space/application';
 import { createDataSpaceDepoRepo } from './DataSpaceQueryBuilderHelper.js';
+import { flowResult } from 'mobx';
+import { LEGEND_QUERY_APP_EVENT } from '../../__lib__/LegendQueryEvent.js';
 
 export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
   readonly groupId: string;
   readonly artifactId: string;
   readonly versionId: string;
   readonly dataSpacePath: string;
+  readonly executionContext: string;
   readonly templateQueryId: string;
   templateQueryTitle?: string;
 
@@ -71,6 +83,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
     artifactId: string,
     versionId: string,
     dataSpacePath: string,
+    executionContext: string,
     templateQueryId: string,
   ) {
     super(applicationStore, depotServerClient);
@@ -79,6 +92,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
     this.artifactId = artifactId;
     this.versionId = versionId;
     this.dataSpacePath = dataSpacePath;
+    this.executionContext = executionContext;
     this.templateQueryId = templateQueryId;
   }
 
@@ -90,7 +104,83 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
     };
   }
 
+  override *buildGraph(): GeneratorFn<void> {
+    // do nothing
+  }
+
   async initializeQueryBuilderState(): Promise<QueryBuilderState> {
+    let dataSpaceAnalysisResult;
+    let isLightGraphEnabled = true;
+    try {
+      const stopWatch = new StopWatch();
+      const project = StoreProjectData.serialization.fromJson(
+        await this.depotServerClient.getProject(this.groupId, this.artifactId),
+      );
+      this.initState.setMessage('Fetching dataspace analysis result');
+      // initialize system
+      stopWatch.record();
+      await this.graphManagerState.initializeSystem();
+      stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH_SYSTEM__SUCCESS);
+
+      const graph_buildReport = createGraphBuilderReport();
+      const dependency_buildReport = createGraphBuilderReport();
+      dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
+        this.graphManagerState.graphManager,
+      ).analyzeDataSpaceCoverage(
+        this.dataSpacePath,
+        () =>
+          retrieveProjectEntitiesWithDependencies(
+            project,
+            this.versionId,
+            this.depotServerClient,
+          ),
+        () =>
+          retrieveAnalyticsResultCache(
+            project,
+            this.versionId,
+            this.dataSpacePath,
+            this.depotServerClient,
+          ),
+        undefined,
+        graph_buildReport,
+        this.graphManagerState.graph,
+        this.executionContext,
+        undefined,
+        this.getProjectInfo(),
+        this.applicationStore.notificationService,
+      );
+      const mappingPath = dataSpaceAnalysisResult.executionContextsIndex.get(
+        this.executionContext,
+      )?.mapping;
+      if (mappingPath) {
+        // report
+        stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
+        const graphBuilderReportData = {
+          timings:
+            this.applicationStore.timeService.finalizeTimingsRecord(stopWatch),
+          dependencies: dependency_buildReport,
+          dependenciesCount:
+            this.graphManagerState.graph.dependencyManager.numberOfDependencies,
+          graph: graph_buildReport,
+        };
+        this.applicationStore.logService.info(
+          LogEvent.create(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS),
+          graphBuilderReportData,
+        );
+      } else {
+        isLightGraphEnabled = false;
+        this.graphManagerState.graph = this.graphManagerState.createNewGraph();
+        await flowResult(this.buildFullGraph());
+      }
+    } catch (error) {
+      this.applicationStore.logService.error(
+        LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
+        error,
+      );
+      this.graphManagerState.graph = this.graphManagerState.createNewGraph();
+      isLightGraphEnabled = false;
+      await flowResult(this.buildFullGraph());
+    }
     const dataSpace = getDataSpace(
       this.dataSpacePath,
       this.graphManagerState.graph,
@@ -129,24 +219,6 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
       );
     }
     this.templateQueryTitle = template.title;
-    let dataSpaceAnalysisResult;
-    try {
-      const project = StoreProjectData.serialization.fromJson(
-        await this.depotServerClient.getProject(this.groupId, this.artifactId),
-      );
-      dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
-        this.graphManagerState.graphManager,
-      ).retrieveDataSpaceAnalysisFromCache(() =>
-        retrieveAnalyticsResultCache(
-          project,
-          this.versionId,
-          dataSpace.path,
-          this.depotServerClient,
-        ),
-      );
-    } catch {
-      // do nothing
-    }
     const sourceInfo = {
       groupId: this.groupId,
       artifactId: this.artifactId,
@@ -172,7 +244,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
           `Can't switch data space to visit current template query`,
         );
       },
-      false,
+      isLightGraphEnabled,
       dataSpaceAnalysisResult,
       undefined,
       undefined,
@@ -181,7 +253,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
       sourceInfo,
     );
     queryBuilderState.setExecutionContext(executionContext);
-    await queryBuilderState.propagateExecutionContextChange();
+    await queryBuilderState.propagateExecutionContextChange(true);
     queryBuilderState.initializeWithQuery(query);
     return queryBuilderState;
   }

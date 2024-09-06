@@ -280,6 +280,8 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
             this.project.artifactId,
             this.project.versionId,
             dataSpace.path,
+            template.executionContextKey ??
+              dataSpace.defaultExecutionContext.name,
             template.id,
           ),
         ),
@@ -295,6 +297,8 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
             this.project.artifactId,
             this.project.versionId,
             dataSpace.path,
+            template.executionContextKey ??
+              dataSpace.defaultExecutionContext.name,
             template.executable.value.path,
           ),
         ),
