@@ -15,14 +15,16 @@
  */
 
 import {
-  type V1_Multiplicity,
   type V1_PureModelContextData,
-  V1_multiplicityModelSchema,
   type V1_DatasetSpecification,
   type PureProtocolProcessorPlugin,
+  type V1_Multiplicity,
+  type V1_TaggedValue,
+  V1_multiplicityModelSchema,
   V1_deserializeDatasetSpecification,
   V1_pureModelContextDataPropSchema,
   V1_MappingModelCoverageAnalysisResult,
+  V1_taggedValueModelSchema,
 } from '@finos/legend-graph';
 import {
   SerializationFactory,
@@ -37,6 +39,7 @@ import {
   usingModelSchema,
 } from '@finos/legend-shared';
 import {
+  type ModelSchema,
   createModelSchema,
   custom,
   deserialize,
@@ -45,7 +48,6 @@ import {
   optional,
   primitive,
   SKIP,
-  type ModelSchema,
 } from 'serializr';
 import type { V1_DataSpaceSupportInfo } from '../../model/packageableElements/dataSpace/V1_DSL_DataSpace_DataSpace.js';
 import { V1_deserializeSupportInfo } from '../../transformation/pureProtocol/V1_DSL_DataSpace_ProtocolHelper.js';
@@ -84,7 +86,47 @@ class V1_DataSpaceExecutionContextAnalysisResult {
   defaultRuntime!: string;
   compatibleRuntimes!: string[];
   mappingModelCoverageAnalysisResult!: V1_MappingModelCoverageAnalysisResult;
+  functionInfos: V1_DataSpaceFunctionInfo[] = [];
   datasets: V1_DatasetSpecification[] = [];
+}
+export class V1_DataSpaceFunctionParameterInfo {
+  name!: string;
+  type!: string;
+  multiplicity!: V1_Multiplicity;
+
+  static readonly serialization = new SerializationFactory(
+    createModelSchema(V1_DataSpaceFunctionParameterInfo, {
+      name: primitive(),
+      type: primitive(),
+      multiplicity: usingModelSchema(V1_multiplicityModelSchema),
+    }),
+  );
+}
+
+class V1_DataSpaceFunctionInfo {
+  functionPath!: string;
+  functionName!: string;
+  functionPrettyName!: string;
+  returnType!: string;
+  packagePath!: string;
+  taggedValues: V1_TaggedValue[] = [];
+  parameterInfoList: V1_DataSpaceFunctionParameterInfo[] = [];
+
+  static readonly serialization = new SerializationFactory(
+    createModelSchema(V1_DataSpaceFunctionInfo, {
+      functionPrettyName: primitive(),
+      functionName: primitive(),
+      functionPath: primitive(),
+      returnType: primitive(),
+      packagePath: primitive(),
+      taggedValues: list(usingModelSchema(V1_taggedValueModelSchema)),
+      parameterInfoList: list(
+        usingModelSchema(
+          V1_DataSpaceFunctionParameterInfo.serialization.schema,
+        ),
+      ),
+    }),
+  );
 }
 
 const V1_dataSpaceExecutionContextAnalysisResultModelSchema = (
@@ -103,6 +145,9 @@ const V1_dataSpaceExecutionContextAnalysisResultModelSchema = (
     description: optional(primitive()),
     mappingModelCoverageAnalysisResult: usingModelSchema(
       V1_MappingModelCoverageAnalysisResult.serialization.schema,
+    ),
+    functionInfos: list(
+      usingModelSchema(V1_DataSpaceFunctionInfo.serialization.schema),
     ),
     mapping: primitive(),
     name: primitive(),

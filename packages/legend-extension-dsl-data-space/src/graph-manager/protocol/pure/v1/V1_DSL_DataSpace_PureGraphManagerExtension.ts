@@ -36,9 +36,12 @@ import {
   V1_deserializePackageableElement,
   QueryDataSpaceExecutionContextInfo,
   LegendSDLC,
+  QueryBuilderFunctionInfo,
+  QueryBuilderFunctionParameterInfo,
 } from '@finos/legend-graph';
 import type { Entity, ProjectGAVCoordinates } from '@finos/legend-storage';
 import {
+  type PlainObject,
   ActionState,
   assertErrorThrown,
   filterByType,
@@ -48,7 +51,6 @@ import {
   isNonNullable,
   LogEvent,
   uniq,
-  type PlainObject,
 } from '@finos/legend-shared';
 import {
   DataSpaceSupportCombinedInfo,
@@ -522,6 +524,32 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
       contextAnalysisResult.defaultRuntime = graph.getRuntime(
         context.defaultRuntime,
       );
+      contextAnalysisResult.functionInfos = new Map<
+        string,
+        QueryBuilderFunctionInfo
+      >();
+      context.functionInfos.forEach((info) => {
+        const funcionInfo = new QueryBuilderFunctionInfo();
+        funcionInfo.functionPath = info.functionPath;
+        funcionInfo.functionName = info.functionName;
+        funcionInfo.functionPrettyName = info.functionPrettyName;
+        funcionInfo.packagePath = info.packagePath;
+        funcionInfo.returnType = info.returnType;
+        funcionInfo.parameterInfoList = info.parameterInfoList.map((param) => {
+          const paramInfo = new QueryBuilderFunctionParameterInfo();
+          paramInfo.multiplicity = graph.getMultiplicity(
+            param.multiplicity.lowerBound,
+            param.multiplicity.upperBound,
+          );
+          paramInfo.name = param.name;
+          paramInfo.type = param.type;
+          return paramInfo;
+        });
+        contextAnalysisResult.functionInfos?.set(
+          funcionInfo.functionPath,
+          funcionInfo,
+        );
+      });
       contextAnalysisResult.mappingModelCoverageAnalysisResult =
         V1_buildModelCoverageAnalysisResult(
           context.mappingModelCoverageAnalysisResult,

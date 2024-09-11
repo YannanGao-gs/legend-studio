@@ -21,6 +21,7 @@ import type {
   PureModel,
   DatasetSpecification,
   MappingModelCoverageAnalysisResult,
+  QueryBuilderFunctionInfo,
 } from '@finos/legend-graph';
 import { prettyCONSTName, uuid } from '@finos/legend-shared';
 import type { DataSpaceSupportInfo } from '../../../graph/metamodel/pure/model/packageableElements/dataSpace/DSL_DataSpace_DataSpace.js';
@@ -34,6 +35,7 @@ export class DataSpaceExecutionContextAnalysisResult {
   defaultRuntime!: PackageableRuntime;
   compatibleRuntimes!: PackageableRuntime[];
   mappingModelCoverageAnalysisResult!: MappingModelCoverageAnalysisResult;
+  functionInfos?: Map<string, QueryBuilderFunctionInfo>;
   datasets: DatasetSpecification[] = [];
 }
 
