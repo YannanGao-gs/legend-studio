@@ -517,12 +517,19 @@ export const QueryBuilderFunctionsExplorerPanel = observer(
           <DragPreviewLayer
             labelGetter={(
               item: QueryBuilderFunctionsExplorerDragSource,
-            ): string =>
-              generateFunctionPrettyName(
-                item.node.packageableElement as ConcreteFunctionDefinition,
-                { fullPath: true },
-              )
-            }
+            ): string => {
+              const functionInfo =
+                queryBuilderState.functionsExplorerState.functionInfoMap?.get(
+                  item.node.packageableElement.path,
+                );
+              return (
+                functionInfo?.functionPrettyName ??
+                generateFunctionPrettyName(
+                  item.node.packageableElement as ConcreteFunctionDefinition,
+                  { fullPath: true },
+                )
+              );
+            }}
             types={[QUERY_BUILDER_FUNCTION_DND_TYPE]}
           />
           {((showDependencyFuncions &&

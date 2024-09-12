@@ -69,6 +69,7 @@ import { Multiplicity } from '../metamodel/pure/packageableElements/domain/Multi
 import type { AnnotatedElement } from '../metamodel/pure/packageableElements/domain/AnnotatedElement.js';
 import type { ConcreteFunctionDefinition } from '../metamodel/pure/packageableElements/function/ConcreteFunctionDefinition.js';
 import { extractDependencyGACoordinateFromRootPackageName } from '../DependencyManager.js';
+import type { TaggedValue } from '../metamodel/pure/packageableElements/domain/TaggedValue.js';
 
 export const addElementToPackage = (
   parent: Package,
@@ -799,3 +800,19 @@ export const getElementOrigin = (
   }
   return '';
 };
+
+export class QueryBuilderFunctionInfo {
+  functionPath!: string;
+  functionName!: string;
+  functionPrettyName!: string;
+  returnType!: string;
+  packagePath!: string;
+  taggedValues: TaggedValue[] = [];
+  parameterInfoList: QueryBuilderFunctionParameterInfo[] = [];
+}
+
+export class QueryBuilderFunctionParameterInfo {
+  name!: string;
+  type!: string;
+  multiplicity!: Multiplicity;
+}

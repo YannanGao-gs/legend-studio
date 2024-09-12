@@ -222,7 +222,8 @@ export class DSL_DataSpace_LegendApplicationPlugin
       if (functionInfos) {
         const _functions = Array.from(functionInfos).map(([key, info]) => {
           const _function = new ConcreteFunctionDefinition(
-            info.functionName,
+            info.functionPath.split(`${info.packagePath}::`)[1] ??
+              info.functionName,
             PackageableElementExplicitReference.create(PrimitiveType.STRING),
             Multiplicity.ONE,
           );

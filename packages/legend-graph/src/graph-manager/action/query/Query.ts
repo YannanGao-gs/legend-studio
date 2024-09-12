@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import type { Multiplicity } from '../../../graph/metamodel/pure/packageableElements/domain/Multiplicity.js';
-import type { TaggedValue } from '../../../graph/metamodel/pure/packageableElements/domain/TaggedValue.js';
-
 export class QueryTaggedValue {
   profile!: string;
   tag!: string;
@@ -164,20 +161,4 @@ export interface QueryInfo {
   mapping?: string | undefined;
   runtime?: string | undefined;
   content: string;
-}
-
-export class QueryBuilderFunctionInfo {
-  functionPath!: string;
-  functionName!: string;
-  functionPrettyName!: string;
-  returnType!: string;
-  packagePath!: string;
-  taggedValues: TaggedValue[] = [];
-  parameterInfoList: QueryBuilderFunctionParameterInfo[] = [];
-}
-
-export class QueryBuilderFunctionParameterInfo {
-  name!: string;
-  type!: string;
-  multiplicity!: Multiplicity;
 }
