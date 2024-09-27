@@ -344,7 +344,7 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
                 template.info.executionContextKey === undefined
                   ? dataSpace.defaultExecutionContext.name
                   : template.info.executionContextKey,
-                template.info.pattern,
+                template.executable ?? template.info.pattern,
               ),
             ),
           );

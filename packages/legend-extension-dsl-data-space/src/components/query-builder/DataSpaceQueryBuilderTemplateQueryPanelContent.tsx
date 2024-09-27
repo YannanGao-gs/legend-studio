@@ -246,10 +246,12 @@ const DataSpaceQueryBuilderTemplateQueryPanel = observer(
     const { queryBuilderState } = props;
     const templateQueryButtonRef = useRef<HTMLButtonElement>(null);
     const templateQueries =
-      queryBuilderState.dataSpace.executables ??
-      queryBuilderState.dataSpaceAnalysisResult?.executables.filter(
-        (ex) => ex.info !== undefined,
-      );
+      queryBuilderState.dataSpace.executables &&
+      queryBuilderState.dataSpace.executables.length > 0
+        ? queryBuilderState.dataSpace.executables
+        : queryBuilderState.dataSpaceAnalysisResult?.executables.filter(
+            (ex) => ex.info !== undefined,
+          );
 
     const showTemplateQueries = (): void => {
       queryBuilderState.setTemplateQueryDialogOpen(true);
