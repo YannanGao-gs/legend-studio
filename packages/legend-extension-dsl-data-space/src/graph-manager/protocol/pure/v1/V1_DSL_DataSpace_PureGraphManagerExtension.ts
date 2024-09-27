@@ -350,11 +350,24 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
     const project = StoreProjectData.serialization.fromJson(
       await depotServerClient.getProject(groupId, artifactId),
     );
-    const functionEntities = await depotServerClient.getEntities(
-      project,
-      versionId,
-      CORE_PURE_PATH.FUNCTION,
-    );
+    const [functionEntities, dependencyFunctionEntities]: [
+      PlainObject<Entity>[],
+      PlainObject<Entity>[],
+    ] = await Promise.all([
+      depotServerClient.getEntities(
+        project,
+        versionId,
+        CORE_PURE_PATH.FUNCTION,
+      ),
+      depotServerClient.getDependencyEntities(
+        groupId,
+        artifactId,
+        versionId,
+        false,
+        false,
+        CORE_PURE_PATH.FUNCTION,
+      ),
+    ]);
     const functionProtocols = functionEntities.map((func) =>
       guaranteeType(
         V1_deserializePackageableElement(
@@ -364,15 +377,6 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
         V1_ConcreteFunctionDefinition,
       ),
     );
-    const dependencyFunctionEntities =
-      await depotServerClient.getDependencyEntities(
-        groupId,
-        artifactId,
-        versionId,
-        false,
-        false,
-        CORE_PURE_PATH.FUNCTION,
-      );
     const dependencyFunctionProtocols = dependencyFunctionEntities.map((func) =>
       guaranteeType(
         V1_deserializePackageableElement(
@@ -568,7 +572,7 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
         // so we could rid of it
         .filter((el) => !graph.getNullableElement(el.path, false))
         .map((el) => this.graphManager.elementProtocolToEntity(el));
-      await this.graphManager.buildGraphForQuery(
+      await this.graphManager.buildGraph(
         graph,
         graphEntities,
         ActionState.create(),
@@ -582,15 +586,19 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
         graphReport,
       );
       if (depotServerClient) {
-        await this.processFunctionForMinimalGraph(
-          projectInfo.groupId,
-          projectInfo.artifactId,
-          projectInfo.versionId,
-          graph,
-          result,
-          plugins,
-          depotServerClient,
-        );
+        try {
+          await this.processFunctionForMinimalGraph(
+            projectInfo.groupId,
+            projectInfo.artifactId,
+            projectInfo.versionId,
+            graph,
+            result,
+            plugins,
+            depotServerClient,
+          );
+        } catch {
+          //do nothing
+        }
       }
     } else {
       // prepare the model context data

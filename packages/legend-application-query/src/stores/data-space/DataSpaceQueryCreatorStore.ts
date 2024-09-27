@@ -282,7 +282,13 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
     queryableDataSpace: QueryableDataSpace,
   ): Promise<QueryBuilderState> {
     let dataSpaceAnalysisResult;
-    if (this.enableMinialGraphForDataSpaceLoadingPerformance) {
+    let buildFullGraph = false;
+    const supportBuildMinimalGraph =
+      this.applicationStore.config.options.TEMPORARY__enableMinimalGraph;
+    if (
+      this.enableMinialGraphForDataSpaceLoadingPerformance &&
+      supportBuildMinimalGraph
+    ) {
       try {
         const stopWatch = new StopWatch();
         const project = StoreProjectData.serialization.fromJson(
@@ -351,35 +357,18 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
           await flowResult(this.buildFullGraph());
         }
       } catch (error) {
+        buildFullGraph = true;
         this.applicationStore.logService.error(
           LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
           error,
         );
-        this.graphManagerState.graph = this.graphManagerState.createNewGraph();
-        await flowResult(this.buildFullGraph());
-        try {
-          const project = StoreProjectData.serialization.fromJson(
-            await this.depotServerClient.getProject(
-              queryableDataSpace.groupId,
-              queryableDataSpace.artifactId,
-            ),
-          );
-          dataSpaceAnalysisResult =
-            await DSL_DataSpace_getGraphManagerExtension(
-              this.graphManagerState.graphManager,
-            ).retrieveDataSpaceAnalysisFromCache(() =>
-              retrieveAnalyticsResultCache(
-                project,
-                queryableDataSpace.versionId,
-                queryableDataSpace.dataSpacePath,
-                this.depotServerClient,
-              ),
-            );
-        } catch {
-          // do nothing
-        }
       }
-    } else {
+    }
+    if (
+      !this.enableMinialGraphForDataSpaceLoadingPerformance ||
+      buildFullGraph ||
+      !supportBuildMinimalGraph
+    ) {
       this.graphManagerState.graph = this.graphManagerState.createNewGraph();
       await flowResult(this.buildFullGraph());
       try {
@@ -402,6 +391,7 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
       } catch {
         // do nothing
       }
+      this.setIsFullGraphEnabled(true);
     }
     const dataSpace = getDataSpace(
       queryableDataSpace.dataSpacePath,

@@ -199,8 +199,12 @@ const DataSpaceQueryBuilderSetupPanelContent = observer(
       if (option.value === queryBuilderState.executionContext) {
         return;
       }
+      const currentMapping =
+        queryBuilderState.executionContext.mapping.value.path;
       queryBuilderState.setExecutionContext(option.value);
-      await queryBuilderState.propagateExecutionContextChange();
+      await queryBuilderState.propagateExecutionContextChange(
+        currentMapping === option.value.mapping.value.path,
+      );
       queryBuilderState.onExecutionContextChange?.(option.value);
     };
 

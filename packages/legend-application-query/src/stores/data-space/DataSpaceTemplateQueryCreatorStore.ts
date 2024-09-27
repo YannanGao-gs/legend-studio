@@ -50,8 +50,11 @@ import {
 } from '../QueryEditorStore.js';
 import type { LegendQueryApplicationStore } from '../LegendQueryBaseStore.js';
 import {
+  DataSpacePackageableElementExecutable,
   DSL_DataSpace_getGraphManagerExtension,
   getDataSpace,
+  getExecutionContextFromDataspaceExecutable,
+  getQueryFromDataspaceExecutable,
   retrieveAnalyticsResultCache,
 } from '@finos/legend-extension-dsl-data-space/graph';
 import {
@@ -107,7 +110,13 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
 
   async initializeQueryBuilderState(): Promise<QueryBuilderState> {
     let dataSpaceAnalysisResult;
-    if (this.enableMinialGraphForDataSpaceLoadingPerformance) {
+    let buildFullGraph = false;
+    const supportBuildMinimalGraph =
+      this.applicationStore.config.options.TEMPORARY__enableMinimalGraph;
+    if (
+      this.enableMinialGraphForDataSpaceLoadingPerformance &&
+      supportBuildMinimalGraph
+    ) {
       try {
         const stopWatch = new StopWatch();
         const project = StoreProjectData.serialization.fromJson(
@@ -177,35 +186,18 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
           await flowResult(this.buildFullGraph());
         }
       } catch (error) {
+        buildFullGraph = true;
         this.applicationStore.logService.error(
           LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
           error,
         );
-        this.graphManagerState.graph = this.graphManagerState.createNewGraph();
-        await flowResult(this.buildFullGraph());
-        try {
-          const project = StoreProjectData.serialization.fromJson(
-            await this.depotServerClient.getProject(
-              this.groupId,
-              this.artifactId,
-            ),
-          );
-          dataSpaceAnalysisResult =
-            await DSL_DataSpace_getGraphManagerExtension(
-              this.graphManagerState.graphManager,
-            ).retrieveDataSpaceAnalysisFromCache(() =>
-              retrieveAnalyticsResultCache(
-                project,
-                this.versionId,
-                this.dataSpacePath,
-                this.depotServerClient,
-              ),
-            );
-        } catch {
-          // do nothing
-        }
       }
-    } else {
+    }
+    if (
+      !this.enableMinialGraphForDataSpaceLoadingPerformance ||
+      buildFullGraph ||
+      !supportBuildMinimalGraph
+    ) {
       this.graphManagerState.graph = this.graphManagerState.createNewGraph();
       await flowResult(this.buildFullGraph());
       try {
@@ -228,48 +220,73 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
       } catch {
         // do nothing
       }
+      this.setIsFullGraphEnabled(true);
     }
     const dataSpace = getDataSpace(
       this.dataSpacePath,
       this.graphManagerState.graph,
     );
-
-    let template = dataSpaceAnalysisResult?.executables.find(
-      (executable) => executable.info?.id === this.templateQueryId,
-    );
-    if (!template) {
-      template = dataSpaceAnalysisResult?.executables.find(
-        (executable) => executable.executable === this.templateQueryId,
-      );
-    }
-    if (!template) {
-      throw new IllegalStateError(
-        `Can't find template query with id '${this.templateQueryId}'`,
-      );
-    }
-    const executionContext =
-      template.info?.executionContextKey === undefined
-        ? dataSpace.defaultExecutionContext
-        : dataSpace.executionContexts.find(
-            (ex) => ex.name === template.info?.executionContextKey,
-          );
-    if (!executionContext) {
-      throw new IllegalStateError(
-        `Can't find a correpsonding execution context`,
-      );
-    }
     let query;
-    if (template.info) {
-      query = await this.graphManagerState.graphManager.pureCodeToLambda(
-        template.info.query,
+    let executionContext;
+    if (dataSpace.executables && dataSpace.executables.length > 0) {
+      let template = dataSpace.executables.find(
+        (ex) => ex.id === this.templateQueryId,
       );
+      if (!template) {
+        template = dataSpace.executables.find(
+          (executable) =>
+            executable instanceof DataSpacePackageableElementExecutable &&
+            executable.executable.value.path === this.templateQueryId,
+        );
+      }
+      if (!template) {
+        throw new IllegalStateError(
+          `Can't find template query with id '${this.templateQueryId}'`,
+        );
+      }
+      executionContext = getExecutionContextFromDataspaceExecutable(
+        dataSpace,
+        template,
+      );
+      query = getQueryFromDataspaceExecutable(template, this.graphManagerState);
+      this.templateQueryTitle = template.title;
+    } else {
+      let template = dataSpaceAnalysisResult?.executables.find(
+        (executable) => executable.info?.id === this.templateQueryId,
+      );
+      if (!template) {
+        template = dataSpaceAnalysisResult?.executables.find(
+          (executable) => executable.executable === this.templateQueryId,
+        );
+      }
+      if (!template) {
+        throw new IllegalStateError(
+          `Can't find template query with id '${this.templateQueryId}'`,
+        );
+      }
+      executionContext =
+        template.info?.executionContextKey === undefined
+          ? dataSpace.defaultExecutionContext
+          : dataSpace.executionContexts.find(
+              (ex) => ex.name === template.info?.executionContextKey,
+            );
+      if (template.info) {
+        query = await this.graphManagerState.graphManager.pureCodeToLambda(
+          template.info.query,
+        );
+      }
+      this.templateQueryTitle = template.title;
     }
     if (!query) {
       throw new IllegalStateError(
         `Can't fetch query from dataspace executable`,
       );
     }
-    this.templateQueryTitle = template.title;
+    if (!executionContext) {
+      throw new IllegalStateError(
+        `Can't find a correpsonding execution context`,
+      );
+    }
     const sourceInfo = {
       groupId: this.groupId,
       artifactId: this.artifactId,

@@ -271,6 +271,7 @@ export abstract class QueryEditorStore {
   showAppInfo = false;
   showDataspaceInfo = false;
   enableMinialGraphForDataSpaceLoadingPerformance = true;
+  isFullGraphEnabled = false;
 
   constructor(
     applicationStore: LegendQueryApplicationStore,
@@ -285,12 +286,14 @@ export abstract class QueryEditorStore {
       showDataspaceInfo: observable,
       queryBuilderState: observable,
       enableMinialGraphForDataSpaceLoadingPerformance: observable,
+      isFullGraphEnabled: observable,
       isPerformingBlockingAction: computed,
       setExistingQueryName: action,
       setShowRegisterServiceModal: action,
       setShowAppInfo: action,
       setShowDataspaceInfo: action,
       setEnableMinialGraphForDataSpaceLoadingPerformance: action,
+      setIsFullGraphEnabled: action,
       initialize: flow,
       buildGraph: flow,
       buildFullGraph: flow,
@@ -416,6 +419,10 @@ export abstract class QueryEditorStore {
 
   protected async setUpEditorState(): Promise<void> {
     // do nothing
+  }
+
+  setIsFullGraphEnabled(val: boolean): void {
+    this.isFullGraphEnabled = val;
   }
 
   async buildQueryForPersistence(
@@ -1304,7 +1311,13 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
     const exec = query.executionContext;
     if (exec instanceof QueryDataSpaceExecutionContext) {
       let dataSpaceAnalysisResult;
-      if (this.enableMinialGraphForDataSpaceLoadingPerformance) {
+      let buildFullGraph = false;
+      const supportBuildMinimalGraph =
+        this.applicationStore.config.options.TEMPORARY__enableMinimalGraph;
+      if (
+        this.enableMinialGraphForDataSpaceLoadingPerformance &&
+        supportBuildMinimalGraph
+      ) {
         try {
           this.initState.setMessage('Fetching dataspace analysis result...');
           const project = StoreProjectData.serialization.fromJson(
@@ -1368,36 +1381,18 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
             graphBuilderReportData,
           );
         } catch (error) {
+          buildFullGraph = true;
           this.applicationStore.logService.error(
             LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
             error,
           );
-          this.graphManagerState.graph =
-            this.graphManagerState.createNewGraph();
-          await flowResult(this.buildFullGraph());
-          try {
-            const project = StoreProjectData.serialization.fromJson(
-              await this.depotServerClient.getProject(
-                query.groupId,
-                query.artifactId,
-              ),
-            );
-            dataSpaceAnalysisResult =
-              await DSL_DataSpace_getGraphManagerExtension(
-                this.graphManagerState.graphManager,
-              ).retrieveDataSpaceAnalysisFromCache(() =>
-                retrieveAnalyticsResultCache(
-                  project,
-                  query.versionId,
-                  exec.dataSpacePath,
-                  this.depotServerClient,
-                ),
-              );
-          } catch {
-            // do nothing
-          }
         }
-      } else {
+      }
+      if (
+        !this.enableMinialGraphForDataSpaceLoadingPerformance ||
+        buildFullGraph ||
+        !supportBuildMinimalGraph
+      ) {
         this.graphManagerState.graph = this.graphManagerState.createNewGraph();
         await flowResult(this.buildFullGraph());
         try {
@@ -1421,6 +1416,7 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
         } catch {
           // do nothing
         }
+        this.setIsFullGraphEnabled(true);
       }
       const dataSpace = getOwnDataSpace(
         exec.dataSpacePath,

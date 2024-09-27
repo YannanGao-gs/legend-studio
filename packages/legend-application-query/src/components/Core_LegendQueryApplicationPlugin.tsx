@@ -825,8 +825,17 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
             dataSpaceQueryBuilderState.dataSpaceAnalysisResult &&
             mappingModelCoverageAnalysisResult
           ) {
-            if (!isGraphBuildingNotRequired) {
-              if (editorStore.enableMinialGraphForDataSpaceLoadingPerformance) {
+            if (
+              !isGraphBuildingNotRequired &&
+              !editorStore.isFullGraphEnabled
+            ) {
+              const supportBuildMinimalGraph =
+                editorStore.applicationStore.config.options
+                  .TEMPORARY__enableMinimalGraph;
+              if (
+                editorStore.enableMinialGraphForDataSpaceLoadingPerformance &&
+                supportBuildMinimalGraph
+              ) {
                 try {
                   const stopWatch = new StopWatch();
                   const graph =
@@ -935,7 +944,7 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
                       ),
                     );
                   }
-                  await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraphForQuery(
+                  await dataSpaceQueryBuilderState.graphManagerState.graphManager.buildGraph(
                     graph,
                     graphEntities,
                     ActionState.create(),
