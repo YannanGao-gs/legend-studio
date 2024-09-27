@@ -239,13 +239,24 @@ const QueryBuilderDerivationProjectionColumnEditor = observer(
             }`,
           );
         } else if (type === QUERY_BUILDER_FUNCTION_DND_TYPE) {
+          const functionPrettyName = generateFunctionCallString(
+            (item as QueryBuilderFunctionsExplorerDragSource).node
+              .packageableElement as ConcreteFunctionDefinition,
+            {
+              graph:
+                projectionColumnState.tdsState.queryBuilderState
+                  .graphManagerState.graph,
+              functionInfo:
+                projectionColumnState.tdsState.queryBuilderState.functionsExplorerState.functionInfoMap?.get(
+                  (item as QueryBuilderFunctionsExplorerDragSource).node
+                    .packageableElement.path,
+                ),
+            },
+          );
           projectionColumnState.derivationLambdaEditorState.setLambdaString(
             `${
               projectionColumnState.derivationLambdaEditorState.lambdaString
-            }${`${generateFunctionCallString(
-              (item as QueryBuilderFunctionsExplorerDragSource).node
-                .packageableElement as ConcreteFunctionDefinition,
-            )}`}`,
+            }${functionPrettyName}`,
           );
         } else {
           projectionColumnState.derivationLambdaEditorState.setLambdaString(
@@ -1262,11 +1273,20 @@ export const QueryBuilderTDSPanel = observer(
                   { addDummyParameter: true },
                 ),
               );
+            const functionPrettyName = generateFunctionCallString(
+              (item as QueryBuilderFunctionsExplorerDragSource).node
+                .packageableElement as ConcreteFunctionDefinition,
+              {
+                graph: tdsState.queryBuilderState.graphManagerState.graph,
+                functionInfo:
+                  tdsState.queryBuilderState.functionsExplorerState.functionInfoMap?.get(
+                    (item as QueryBuilderFunctionsExplorerDragSource).node
+                      .packageableElement.path,
+                  ),
+              },
+            );
             derivationProjectionColumn.derivationLambdaEditorState.setLambdaString(
-              `${DEFAULT_LAMBDA_VARIABLE_NAME}${LAMBDA_PIPE}${generateFunctionCallString(
-                (item as QueryBuilderFunctionsExplorerDragSource).node
-                  .packageableElement as ConcreteFunctionDefinition,
-              )}`,
+              `${DEFAULT_LAMBDA_VARIABLE_NAME}${LAMBDA_PIPE}${functionPrettyName} `,
             );
             tdsState.addColumn(derivationProjectionColumn);
             break;

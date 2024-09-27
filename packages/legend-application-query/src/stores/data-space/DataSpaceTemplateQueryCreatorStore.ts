@@ -18,14 +18,23 @@ import {
   type Query,
   type QuerySearchSpecification,
   type RawLambda,
+  GRAPH_MANAGER_EVENT,
   QueryProjectCoordinates,
+  createGraphBuilderReport,
   extractElementNameFromPath,
 } from '@finos/legend-graph';
 import {
   type DepotServerClient,
+  retrieveProjectEntitiesWithDependencies,
   StoreProjectData,
 } from '@finos/legend-server-depot';
-import { IllegalStateError, uuid } from '@finos/legend-shared';
+import {
+  IllegalStateError,
+  LogEvent,
+  StopWatch,
+  uuid,
+  type GeneratorFn,
+} from '@finos/legend-shared';
 import {
   type QueryBuilderState,
   QueryBuilderDataBrowserWorkflow,
@@ -35,18 +44,15 @@ import {
   parseGACoordinates,
 } from '@finos/legend-storage';
 import {
+  type QueryPersistConfiguration,
   QueryBuilderActionConfig_QueryApplication,
   QueryEditorStore,
-  type QueryPersistConfiguration,
 } from '../QueryEditorStore.js';
 import type { LegendQueryApplicationStore } from '../LegendQueryBaseStore.js';
 import {
   DSL_DataSpace_getGraphManagerExtension,
   getDataSpace,
   retrieveAnalyticsResultCache,
-  getExecutionContextFromDataspaceExecutable,
-  getQueryFromDataspaceExecutable,
-  DataSpacePackageableElementExecutable,
 } from '@finos/legend-extension-dsl-data-space/graph';
 import {
   type DataSpaceInfo,
@@ -55,12 +61,15 @@ import {
   createQueryDataSpaceTaggedValue,
 } from '@finos/legend-extension-dsl-data-space/application';
 import { createDataSpaceDepoRepo } from './DataSpaceQueryBuilderHelper.js';
+import { flowResult } from 'mobx';
+import { LEGEND_QUERY_APP_EVENT } from '../../__lib__/LegendQueryEvent.js';
 
 export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
   readonly groupId: string;
   readonly artifactId: string;
   readonly versionId: string;
   readonly dataSpacePath: string;
+  readonly executionContext: string;
   readonly templateQueryId: string;
   templateQueryTitle?: string;
 
@@ -71,6 +80,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
     artifactId: string,
     versionId: string,
     dataSpacePath: string,
+    executionContext: string,
     templateQueryId: string,
   ) {
     super(applicationStore, depotServerClient);
@@ -79,6 +89,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
     this.artifactId = artifactId;
     this.versionId = versionId;
     this.dataSpacePath = dataSpacePath;
+    this.executionContext = executionContext;
     this.templateQueryId = templateQueryId;
   }
 
@@ -90,19 +101,145 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
     };
   }
 
+  override *buildGraph(): GeneratorFn<void> {
+    // do nothing
+  }
+
   async initializeQueryBuilderState(): Promise<QueryBuilderState> {
+    let dataSpaceAnalysisResult;
+    if (this.enableMinialGraphForDataSpaceLoadingPerformance) {
+      try {
+        const stopWatch = new StopWatch();
+        const project = StoreProjectData.serialization.fromJson(
+          await this.depotServerClient.getProject(
+            this.groupId,
+            this.artifactId,
+          ),
+        );
+        this.initState.setMessage('Fetching dataspace analysis result...');
+        // initialize system
+        stopWatch.record();
+        await this.graphManagerState.initializeSystem();
+        stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH_SYSTEM__SUCCESS);
+
+        const graph_buildReport = createGraphBuilderReport();
+        const dependency_buildReport = createGraphBuilderReport();
+        dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
+          this.graphManagerState.graphManager,
+        ).analyzeDataSpaceCoverage(
+          this.dataSpacePath,
+          () =>
+            retrieveProjectEntitiesWithDependencies(
+              project,
+              this.versionId,
+              this.depotServerClient,
+            ),
+          () =>
+            retrieveAnalyticsResultCache(
+              project,
+              this.versionId,
+              this.dataSpacePath,
+              this.depotServerClient,
+            ),
+          undefined,
+          graph_buildReport,
+          this.graphManagerState.graph,
+          this.executionContext,
+          undefined,
+          this.getProjectInfo(),
+          this.applicationStore.notificationService,
+          this.depotServerClient,
+        );
+        const mappingPath = dataSpaceAnalysisResult.executionContextsIndex.get(
+          this.executionContext,
+        )?.mapping;
+        if (mappingPath) {
+          // report
+          stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
+          const graphBuilderReportData = {
+            timings:
+              this.applicationStore.timeService.finalizeTimingsRecord(
+                stopWatch,
+              ),
+            dependencies: dependency_buildReport,
+            dependenciesCount:
+              this.graphManagerState.graph.dependencyManager
+                .numberOfDependencies,
+            graph: graph_buildReport,
+          };
+          this.applicationStore.logService.info(
+            LogEvent.create(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS),
+            graphBuilderReportData,
+          );
+        } else {
+          this.graphManagerState.graph =
+            this.graphManagerState.createNewGraph();
+          await flowResult(this.buildFullGraph());
+        }
+      } catch (error) {
+        this.applicationStore.logService.error(
+          LogEvent.create(LEGEND_QUERY_APP_EVENT.GENERIC_FAILURE),
+          error,
+        );
+        this.graphManagerState.graph = this.graphManagerState.createNewGraph();
+        await flowResult(this.buildFullGraph());
+        try {
+          const project = StoreProjectData.serialization.fromJson(
+            await this.depotServerClient.getProject(
+              this.groupId,
+              this.artifactId,
+            ),
+          );
+          dataSpaceAnalysisResult =
+            await DSL_DataSpace_getGraphManagerExtension(
+              this.graphManagerState.graphManager,
+            ).retrieveDataSpaceAnalysisFromCache(() =>
+              retrieveAnalyticsResultCache(
+                project,
+                this.versionId,
+                this.dataSpacePath,
+                this.depotServerClient,
+              ),
+            );
+        } catch {
+          // do nothing
+        }
+      }
+    } else {
+      this.graphManagerState.graph = this.graphManagerState.createNewGraph();
+      await flowResult(this.buildFullGraph());
+      try {
+        const project = StoreProjectData.serialization.fromJson(
+          await this.depotServerClient.getProject(
+            this.groupId,
+            this.artifactId,
+          ),
+        );
+        dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
+          this.graphManagerState.graphManager,
+        ).retrieveDataSpaceAnalysisFromCache(() =>
+          retrieveAnalyticsResultCache(
+            project,
+            this.versionId,
+            this.dataSpacePath,
+            this.depotServerClient,
+          ),
+        );
+      } catch {
+        // do nothing
+      }
+    }
     const dataSpace = getDataSpace(
       this.dataSpacePath,
       this.graphManagerState.graph,
     );
-    let template = dataSpace.executables?.find(
-      (executable) => executable.id === this.templateQueryId,
+
+    let template = dataSpaceAnalysisResult?.executables.find(
+      (executable) => executable.info?.id === this.templateQueryId,
     );
     if (!template) {
-      template = dataSpace.executables?.find(
-        (executable) =>
-          executable instanceof DataSpacePackageableElementExecutable &&
-          executable.executable.value.path === this.templateQueryId,
+      template = dataSpaceAnalysisResult?.executables.find(
+        (executable) => executable.executable === this.templateQueryId,
       );
     }
     if (!template) {
@@ -110,43 +247,29 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
         `Can't find template query with id '${this.templateQueryId}'`,
       );
     }
-    const executionContext = getExecutionContextFromDataspaceExecutable(
-      dataSpace,
-      template,
-    );
+    const executionContext =
+      template.info?.executionContextKey === undefined
+        ? dataSpace.defaultExecutionContext
+        : dataSpace.executionContexts.find(
+            (ex) => ex.name === template.info?.executionContextKey,
+          );
     if (!executionContext) {
       throw new IllegalStateError(
         `Can't find a correpsonding execution context`,
       );
     }
-    const query = getQueryFromDataspaceExecutable(
-      template,
-      this.graphManagerState,
-    );
+    let query;
+    if (template.info) {
+      query = await this.graphManagerState.graphManager.pureCodeToLambda(
+        template.info.query,
+      );
+    }
     if (!query) {
       throw new IllegalStateError(
         `Can't fetch query from dataspace executable`,
       );
     }
     this.templateQueryTitle = template.title;
-    let dataSpaceAnalysisResult;
-    try {
-      const project = StoreProjectData.serialization.fromJson(
-        await this.depotServerClient.getProject(this.groupId, this.artifactId),
-      );
-      dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
-        this.graphManagerState.graphManager,
-      ).retrieveDataSpaceAnalysisFromCache(() =>
-        retrieveAnalyticsResultCache(
-          project,
-          this.versionId,
-          dataSpace.path,
-          this.depotServerClient,
-        ),
-      );
-    } catch {
-      // do nothing
-    }
     const sourceInfo = {
       groupId: this.groupId,
       artifactId: this.artifactId,
@@ -167,7 +290,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
         this.versionId,
         undefined,
       ),
-      (dataSpaceInfo: DataSpaceInfo) => {
+      async (dataSpaceInfo: DataSpaceInfo) => {
         this.applicationStore.notificationService.notifyWarning(
           `Can't switch data space to visit current template query`,
         );
@@ -180,7 +303,7 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
       sourceInfo,
     );
     queryBuilderState.setExecutionContext(executionContext);
-    queryBuilderState.propagateExecutionContextChange(executionContext);
+    await queryBuilderState.propagateExecutionContextChange(true);
     queryBuilderState.initializeWithQuery(query);
     return queryBuilderState;
   }

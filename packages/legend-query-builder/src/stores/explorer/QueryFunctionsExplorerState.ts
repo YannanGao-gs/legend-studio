@@ -16,6 +16,7 @@
 
 import {
   type PackageableElement,
+  type FunctionAnalysisInfo,
   ConcreteFunctionDefinition,
   Package,
   Unit,
@@ -35,6 +36,7 @@ import {
   type TreeData,
   compareLabelFn,
 } from '@finos/legend-art';
+import type { QueryBuilder_LegendApplicationPlugin_Extension } from '../QueryBuilder_LegendApplicationPlugin_Extension.js';
 
 export const QUERY_BUILDER_FUNCTION_DND_TYPE = 'QUERY_BUILDER_FUNCTION';
 
@@ -94,6 +96,11 @@ export const generateFunctionsExplorerTreeNodeData = (
               child instanceof ConcreteFunctionDefinition,
           )
           .map((child) => child.path)
+          .concat(
+            queryBuilderState.functionsExplorerState.packagePathToFunctionInfoMap
+              ?.get(element.path)
+              ?.map((info) => info.functionPath) ?? [],
+          )
       : [],
   packageableElement: element,
 });
@@ -108,6 +115,10 @@ const generateFunctionsExplorerTreeNodeChilrdren = (
     queryBuilderState,
     rootPackageName,
   );
+  const qualifiedExtraFunctionPaths =
+    queryBuilderState.functionsExplorerState.packagePathToFunctionInfoMap
+      ?.get(node.id)
+      ?.map((info) => info.functionPath);
   node.childrenIds = (node.packageableElement as Package).children
     .filter((child) => !(child instanceof Unit))
     .filter(
@@ -116,7 +127,8 @@ const generateFunctionsExplorerTreeNodeChilrdren = (
         (child instanceof Package && validDisplayablePackageSet.has(child)) ||
         child instanceof ConcreteFunctionDefinition,
     )
-    .map((child) => child.path);
+    .map((child) => child.path)
+    .concat(qualifiedExtraFunctionPaths ?? []);
   (node.packageableElement as Package).children
     .filter((child) => !(child instanceof Unit))
     .filter(
@@ -124,6 +136,11 @@ const generateFunctionsExplorerTreeNodeChilrdren = (
         // avoid displaying empty packages
         (child instanceof Package && validDisplayablePackageSet.has(child)) ||
         child instanceof ConcreteFunctionDefinition,
+    )
+    .concat(
+      queryBuilderState.functionsExplorerState.displayableFunctions.filter(
+        (func) => qualifiedExtraFunctionPaths?.includes(func.path),
+      ),
     )
     .map((child) =>
       generateFunctionsExplorerTreeNodeData(
@@ -164,7 +181,10 @@ export const getFunctionsExplorerTreeData = (
       }
       break;
     default:
-      if (queryBuilderState.graphManagerState.graph.ownFunctions.length === 0) {
+      if (
+        queryBuilderState.functionsExplorerState.displayableFunctions.length ===
+        0
+      ) {
         return { rootIds, nodes };
       }
   }
@@ -252,6 +272,10 @@ export class QueryFunctionsExplorerState {
   dependencyFunctionExplorerStates: QueryFunctionExplorerState[] = [];
   displayablePackagesSet: Set<Package> = new Set<Package>();
   dependencyDisplayablePackagesSet: Set<Package> = new Set<Package>();
+  displayableFunctions: ConcreteFunctionDefinition[] = [];
+  displayableDependencyFunctions: ConcreteFunctionDefinition[] = [];
+  functionInfoMap?: Map<string, FunctionAnalysisInfo>;
+  packagePathToFunctionInfoMap?: Map<string, FunctionAnalysisInfo[]>;
 
   constructor(queryBuilderState: QueryBuilderState) {
     makeObservable(this, {
@@ -260,9 +284,18 @@ export class QueryFunctionsExplorerState {
       treeData: observable.ref,
       dependencyTreeData: observable.ref,
       setTreeData: action,
+      functionInfoMap: observable,
+      packagePathToFunctionInfoMap: observable,
+      displayableFunctions: observable,
+      displayableDependencyFunctions: observable,
+      setFunctionInfoMap: action,
+      setDisplayableFunctions: action,
+      setDisplayableDependencyFunctions: action,
+      setPackagePathToFunctionInfoMap: action,
       setDependencyTreeData: action,
       refreshTree: action,
       onTreeNodeSelect: action,
+      initializeTreeData: action,
     });
     this.queryBuilderState = queryBuilderState;
     this.initializeTreeData();
@@ -279,8 +312,24 @@ export class QueryFunctionsExplorerState {
     }
   }
 
+  setDisplayableFunctions(funcs: ConcreteFunctionDefinition[]): void {
+    this.displayableFunctions = funcs;
+  }
+
+  setDisplayableDependencyFunctions(funcs: ConcreteFunctionDefinition[]): void {
+    this.displayableDependencyFunctions = funcs;
+  }
+
+  setFunctionInfoMap(info: Map<string, FunctionAnalysisInfo>) {
+    this.functionInfoMap = info;
+  }
+
+  setPackagePathToFunctionInfoMap(map: Map<string, FunctionAnalysisInfo[]>) {
+    this.packagePathToFunctionInfoMap = map;
+  }
+
   async initializeDisplayablePackagesSet(): Promise<void> {
-    this.queryBuilderState.graphManagerState.graph.ownFunctions
+    this.displayableFunctions
       .map((f) => getAllPackagesFromElement(f))
       .flat()
       .forEach((pkg) => this.displayablePackagesSet.add(pkg));
@@ -348,6 +397,63 @@ export class QueryFunctionsExplorerState {
   };
 
   initializeTreeData(): void {
+    const extraQueryBuilderFunctionHelper =
+      this.queryBuilderState.applicationStore.pluginManager
+        .getApplicationPlugins()
+        .flatMap(
+          (plugin) =>
+            (
+              plugin as QueryBuilder_LegendApplicationPlugin_Extension
+            ).getExtraQueryBuilderFunctionHelper?.(this.queryBuilderState) ??
+            [],
+        )[0];
+    if (extraQueryBuilderFunctionHelper) {
+      this.setFunctionInfoMap(extraQueryBuilderFunctionHelper.functionInfoMap);
+      this.setDisplayableFunctions(
+        this.queryBuilderState.graphManagerState.graph.ownFunctions.concat(
+          extraQueryBuilderFunctionHelper.functions,
+        ),
+      );
+      if (this.functionInfoMap) {
+        const packagePathToFunctionInfoMap = new Map<
+          string,
+          FunctionAnalysisInfo[]
+        >();
+        Array.from(this.functionInfoMap.values()).forEach((info) => {
+          const curr = packagePathToFunctionInfoMap.get(info.packagePath);
+          if (curr) {
+            packagePathToFunctionInfoMap.set(info.packagePath, [...curr, info]);
+          } else {
+            packagePathToFunctionInfoMap.set(info.packagePath, [info]);
+          }
+        });
+        this.setPackagePathToFunctionInfoMap(packagePathToFunctionInfoMap);
+      }
+      Array.from(
+        extraQueryBuilderFunctionHelper.dependencyFunctionInfoMap.values(),
+      ).forEach((info) => {
+        const curr = this.packagePathToFunctionInfoMap?.get(info.packagePath);
+        if (curr) {
+          this.packagePathToFunctionInfoMap?.set(info.packagePath, [
+            ...curr,
+            info,
+          ]);
+        } else {
+          this.packagePathToFunctionInfoMap?.set(info.packagePath, [info]);
+        }
+      });
+      if (this.functionInfoMap) {
+        extraQueryBuilderFunctionHelper.dependencyFunctionInfoMap.forEach(
+          (value, key) => {
+            this.functionInfoMap?.set(key, value);
+          },
+        );
+      }
+    } else {
+      this.setDisplayableFunctions(
+        this.queryBuilderState.graphManagerState.graph.ownFunctions,
+      );
+    }
     this.initializeDisplayablePackagesSet()
       .catch(noop())
       .finally(() => {
@@ -357,15 +463,26 @@ export class QueryFunctionsExplorerState {
             this.queryBuilderState,
           ),
         );
-        this.functionExplorerStates =
-          this.queryBuilderState.graphManagerState.graph.ownFunctions.map(
-            (f) => new QueryFunctionExplorerState(this, f),
-          );
+        this.functionExplorerStates = this.displayableFunctions.map(
+          (f) => new QueryFunctionExplorerState(this, f),
+        );
       });
     if (
       this.queryBuilderState.graphManagerState.graph.dependencyManager
         .hasDependencies
     ) {
+      if (extraQueryBuilderFunctionHelper?.dependencyFunctions) {
+        this.setDisplayableDependencyFunctions(
+          this.queryBuilderState.graphManagerState.graph.dependencyManager.functions.concat(
+            extraQueryBuilderFunctionHelper.dependencyFunctions,
+          ),
+        );
+      } else {
+        this.setDisplayableDependencyFunctions(
+          this.queryBuilderState.graphManagerState.graph.dependencyManager
+            .functions,
+        );
+      }
       this.initializeDependencyDisplayablePackagesSet()
         .catch(noop())
         .finally(() => {
@@ -378,7 +495,7 @@ export class QueryFunctionsExplorerState {
             ),
           );
           this.dependencyFunctionExplorerStates =
-            this.queryBuilderState.graphManagerState.graph.dependencyManager.functions.map(
+            this.displayableDependencyFunctions.map(
               (f) => new QueryFunctionExplorerState(this, f),
             );
         });
