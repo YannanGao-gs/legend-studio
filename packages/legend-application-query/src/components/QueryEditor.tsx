@@ -470,13 +470,21 @@ const QueryEditorExistingQueryInfoModal = observer(
                   <div className="query-preview__field">
                     <div className="query-preview__field__label">Mapping</div>
                     <div className="query-preview__field__value">
-                      {executionContext.mapping.value.name}
+                      {
+                        updateState.editorStore.graphManagerState.graph.getMapping(
+                          executionContext.mapping,
+                        ).name
+                      }
                     </div>
                   </div>
                   <div className="query-preview__field">
                     <div className="query-preview__field__label">Runtime</div>
                     <div className="query-preview__field__value">
-                      {executionContext.runtime.value.name}
+                      {
+                        updateState.editorStore.graphManagerState.graph.getRuntime(
+                          executionContext.runtime,
+                        ).name
+                      }
                     </div>
                   </div>
                 </>
@@ -603,6 +611,12 @@ export const QueryEditor = observer(() => {
       !engineConfig.useClientRequestPayloadCompression,
     );
 
+  const toggleEnableMinialGraphForDataSpaceLoadingPerformance = (): void => {
+    editorStore.setEnableMinialGraphForDataSpaceLoadingPerformance(
+      !editorStore.enableMinialGraphForDataSpaceLoadingPerformance,
+    );
+  };
+
   const TEMPORARY__toggleLightDarkMode = (): void => {
     applicationStore.layoutService.setColorTheme(
       applicationStore.layoutService.TEMPORARY__isLightColorThemeEnabled
@@ -627,7 +641,11 @@ export const QueryEditor = observer(() => {
       applicationStore.alertUnhandledError,
     );
     applicationStore.releaseNotesService.updateViewedVersion();
-  }, [editorStore, applicationStore]);
+  }, [
+    editorStore,
+    applicationStore,
+    editorStore.enableMinialGraphForDataSpaceLoadingPerformance,
+  ]);
 
   return (
     <div className="query-editor">
@@ -672,6 +690,20 @@ export const QueryEditor = observer(() => {
                     </MenuContentItemIcon>
                     <MenuContentItemLabel>
                       Compress request payload
+                    </MenuContentItemLabel>
+                  </MenuContentItem>
+                  <MenuContentItem
+                    onClick={
+                      toggleEnableMinialGraphForDataSpaceLoadingPerformance
+                    }
+                  >
+                    <MenuContentItemIcon>
+                      {editorStore.enableMinialGraphForDataSpaceLoadingPerformance ? (
+                        <CheckIcon />
+                      ) : null}
+                    </MenuContentItemIcon>
+                    <MenuContentItemLabel>
+                      Enable minimal graph
                     </MenuContentItemLabel>
                   </MenuContentItem>
                 </MenuContent>
