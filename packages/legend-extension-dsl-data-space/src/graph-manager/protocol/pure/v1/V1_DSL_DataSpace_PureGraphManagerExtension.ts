@@ -601,8 +601,7 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
         }
       }
     } else {
-      // prepare the model context data
-      graphEntities = analysisResult.model.elements
+      const elements = analysisResult.model.elements
         // NOTE: this is a temporary hack to fix a problem with data space analytics
         // where the classes for properties are not properly surveyed
         // We need to wait for the actual fix in backend to be merged and released
@@ -639,8 +638,16 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
             .filter(isNonNullable),
         )
         .concat(mappingModels)
-        .concat(runtimeModels)
-        .concat(dataspaceEntity)
+        .concat(runtimeModels);
+      const alreadyContainsDataspace = elements.find(
+        (e) => e.path === dataspaceEntity.path,
+      );
+      let allElements = elements;
+      if (!alreadyContainsDataspace) {
+        allElements = elements.concat(dataspaceEntity);
+      }
+      // prepare the model context data
+      graphEntities = allElements
         // NOTE: if an element could be found in the graph already it means it comes from system
         // so we could rid of it
         .filter((el) => !graph.getNullableElement(el.path, false))
