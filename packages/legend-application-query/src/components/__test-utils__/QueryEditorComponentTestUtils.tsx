@@ -43,6 +43,10 @@ import {
 import { LegendQueryFrameworkProvider } from '../LegendQueryFrameworkProvider.js';
 import { TEST__BrowserEnvironmentProvider } from '@finos/legend-application/test';
 import { Core_LegendQueryApplicationPlugin } from '../Core_LegendQueryApplicationPlugin.js';
+import {
+  DSL_DataSpace_getGraphManagerExtension,
+  type V1_DataSpaceAnalysisResult,
+} from '@finos/legend-extension-dsl-data-space/graph';
 
 const TEST_QUERY_ID = 'test-query-id';
 export const TEST_QUERY_NAME = 'MyTestQuery';
@@ -116,6 +120,143 @@ export const TEST__setUpQueryEditor = async (
   });
 
   await graphManagerState.initializeSystem();
+  await graphManagerState.graphManager.buildGraph(
+    graphManagerState.graph,
+    entities,
+    graphManagerState.graphBuildState,
+  );
+
+  const query = new Query();
+  query.name = lightQuery.name;
+  query.id = lightQuery.id;
+  query.versionId = lightQuery.versionId;
+  query.groupId = lightQuery.groupId;
+  query.artifactId = lightQuery.artifactId;
+  query.owner = lightQuery.owner;
+  query.isCurrentUserQuery = lightQuery.isCurrentUserQuery;
+  const _mapping = graphManagerState.graph.getMapping(mappingPath);
+  query.mapping = mappingPath;
+  query.runtime = runtimePath;
+  const execContext = new QueryExplicitExecutionContext();
+  execContext.mapping = mappingPath;
+  execContext.runtime = runtimePath;
+  query.executionContext = execContext;
+  query.content = 'some content';
+  createSpy(
+    MOCK__editorStore.depotServerClient,
+    'getProject',
+  ).mockResolvedValue(projectData);
+  createSpy(graphManagerState.graphManager, 'getLightQuery').mockResolvedValue(
+    lightQuery,
+  );
+  createSpy(
+    graphManagerState.graphManager,
+    'pureCodeToLambda',
+  ).mockResolvedValue(new RawLambda(lambda.parameters, lambda.body));
+  createSpy(graphManagerState.graphManager, 'getQuery').mockResolvedValue(
+    query,
+  );
+  if (rawMappingModelCoverageAnalysisResult) {
+    createSpy(
+      graphManagerState.graphManager,
+      'analyzeMappingModelCoverage',
+    ).mockResolvedValue(
+      graphManagerState.graphManager.buildMappingModelCoverageAnalysisResult(
+        rawMappingModelCoverageAnalysisResult,
+        _mapping,
+      ),
+    );
+  }
+
+  MOCK__editorStore.buildGraph = createMock();
+  graphManagerState.graphManager.initialize = createMock();
+
+  const renderResult = render(
+    <ApplicationStoreProvider store={MOCK__editorStore.applicationStore}>
+      <TEST__BrowserEnvironmentProvider>
+        <LegendQueryFrameworkProvider>
+          <ExistingQueryEditor />
+        </LegendQueryFrameworkProvider>
+      </TEST__BrowserEnvironmentProvider>
+    </ApplicationStoreProvider>,
+  );
+  await waitFor(() =>
+    renderResult.getByTestId(QUERY_BUILDER_TEST_ID.QUERY_BUILDER),
+  );
+
+  return {
+    renderResult,
+    queryBuilderState: guaranteeNonNullable(
+      MOCK__editorStore.queryBuilderState,
+      `Query builder state should have been initialized`,
+    ),
+  };
+};
+
+export const TEST__setUpDataSpaceExistingQueryEditor = async (
+  MOCK__editorStore: ExistingQueryEditorStore,
+  dataspaceAnalyticsResult: V1_DataSpaceAnalysisResult,
+  dataSpacePath: string,
+  lambda: RawLambda,
+  mappingPath: string,
+  runtimePath: string,
+): Promise<{
+  renderResult: RenderResult;
+  queryBuilderState: QueryBuilderState;
+}> => {
+  const projectData = {
+    id: 'test-id',
+    groupId: 'test.group',
+    artifactId: 'test-artifact',
+    projectId: 'test-project-id',
+    versions: ['0.0.0'],
+    latestVersion: '0.0.0',
+  };
+
+  const lightQuery = new LightQuery();
+  lightQuery.name = TEST_QUERY_NAME;
+  lightQuery.id = TEST_QUERY_ID;
+  lightQuery.versionId = '0.0.0';
+  lightQuery.groupId = 'test.group';
+  lightQuery.artifactId = 'test-artifact';
+  lightQuery.owner = 'test-artifact';
+  lightQuery.isCurrentUserQuery = true;
+
+  const graphManagerState = MOCK__editorStore.graphManagerState;
+
+  await graphManagerState.graphManager.initialize({
+    env: 'test',
+    tabSize: 2,
+    clientConfig: {},
+  });
+
+  await graphManagerState.initializeSystem();
+  const dataSpaceAnalysisResult = await DSL_DataSpace_getGraphManagerExtension(
+    this.graphManagerState.graphManager,
+  ).analyzeDataSpaceCoverage(
+    dataSpacePath,
+    () =>
+      retrieveProjectEntitiesWithDependencies(
+        project,
+        query.versionId,
+        this.depotServerClient,
+      ),
+    () =>
+      retrieveAnalyticsResultCache(
+        project,
+        query.versionId,
+        exec.dataSpacePath,
+        this.depotServerClient,
+      ),
+    undefined,
+    graph_buildReport,
+    graphManagerState.graph,
+    exec.executionKey,
+    undefined,
+    this.getProjectInfo(),
+    this.applicationStore.notificationService,
+    this.depotServerClient,
+  );
   await graphManagerState.graphManager.buildGraph(
     graphManagerState.graph,
     entities,

@@ -65,7 +65,7 @@ class LegendQueryApplicationCoreOptions {
   TEMPORARY__serviceRegistrationConfig: ServiceRegistrationEnvironmentConfig[] =
     [];
 
-  TEMPORARY__enableMinimalGraph = false;
+  TEMPORARY__enableMinimalGraph = true;
 
   /**
    * Config specific to query builder

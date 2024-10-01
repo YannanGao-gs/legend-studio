@@ -41,3 +41,5 @@ export {
   V1_DataSpaceExecutionContext,
   V1_DataSpace,
 } from '../graph-manager/protocol/pure/v1/model/packageableElements/dataSpace/V1_DSL_DataSpace_DataSpace.js';
+
+export { V1_DataSpaceAnalysisResult } from '../graph-manager/protocol/pure/v1/engine/analytics/V1_DataSpaceAnalysis.js';
