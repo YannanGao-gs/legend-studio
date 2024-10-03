@@ -271,7 +271,6 @@ export abstract class QueryEditorStore {
   showAppInfo = false;
   showDataspaceInfo = false;
   enableMinialGraphForDataSpaceLoadingPerformance = true;
-  isFullGraphEnabled = false;
 
   constructor(
     applicationStore: LegendQueryApplicationStore,
@@ -286,14 +285,12 @@ export abstract class QueryEditorStore {
       showDataspaceInfo: observable,
       queryBuilderState: observable,
       enableMinialGraphForDataSpaceLoadingPerformance: observable,
-      isFullGraphEnabled: observable,
       isPerformingBlockingAction: computed,
       setExistingQueryName: action,
       setShowRegisterServiceModal: action,
       setShowAppInfo: action,
       setShowDataspaceInfo: action,
       setEnableMinialGraphForDataSpaceLoadingPerformance: action,
-      setIsFullGraphEnabled: action,
       initialize: flow,
       buildGraph: flow,
       buildFullGraph: flow,
@@ -419,10 +416,6 @@ export abstract class QueryEditorStore {
 
   protected async setUpEditorState(): Promise<void> {
     // do nothing
-  }
-
-  setIsFullGraphEnabled(val: boolean): void {
-    this.isFullGraphEnabled = val;
   }
 
   async buildQueryForPersistence(
@@ -1312,6 +1305,7 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
     if (exec instanceof QueryDataSpaceExecutionContext) {
       let dataSpaceAnalysisResult;
       let buildFullGraph = false;
+      let isLightGraphEnabled = true;
       const supportBuildMinimalGraph =
         this.applicationStore.config.options.TEMPORARY__enableMinimalGraph;
       if (
@@ -1416,7 +1410,7 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
         } catch {
           // do nothing
         }
-        this.setIsFullGraphEnabled(true);
+        isLightGraphEnabled = false;
       }
       const dataSpace = getOwnDataSpace(
         exec.dataSpacePath,
@@ -1452,6 +1446,7 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
           new QueryBuilderActionConfig_QueryApplication(this),
           dataSpace,
           matchingExecutionContext,
+          isLightGraphEnabled,
           createDataSpaceDepoRepo(
             this,
             query.groupId,

@@ -429,6 +429,7 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
   executionContext!: DataSpaceExecutionContext;
   showRuntimeSelector = false;
   isTemplateQueryDialogOpen = false;
+  isLightGraphEnabled!: boolean;
 
   constructor(
     applicationStore: GenericLegendApplicationStore,
@@ -437,6 +438,7 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
     actionConfig: QueryBuilderActionConfig,
     dataSpace: DataSpace,
     executionContext: DataSpaceExecutionContext,
+    isLightGraphEnabled: boolean,
     dataSpaceRepo: DataSpacesBuilderRepoistory | undefined,
     onDataSpaceChange: (val: DataSpaceInfo) => Promise<void>,
     dataSpaceAnalysisResult?: DataSpaceAnalysisResult | undefined,
@@ -454,9 +456,11 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
       executionContext: observable,
       showRuntimeSelector: observable,
       isTemplateQueryDialogOpen: observable,
+      isLightGraphEnabled: observable,
       setExecutionContext: action,
       setShowRuntimeSelector: action,
       setTemplateQueryDialogOpen: action,
+      setIsLightGraphEnabled: action,
     });
 
     this.dataSpace = dataSpace;
@@ -498,5 +502,9 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
 
   setShowRuntimeSelector(val: boolean): void {
     this.showRuntimeSelector = val;
+  }
+
+  setIsLightGraphEnabled(val: boolean): void {
+    this.isLightGraphEnabled = val;
   }
 }

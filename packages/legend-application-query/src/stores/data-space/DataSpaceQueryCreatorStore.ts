@@ -283,6 +283,7 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
   ): Promise<QueryBuilderState> {
     let dataSpaceAnalysisResult;
     let buildFullGraph = false;
+    let isLightGraphEnabled = true;
     const supportBuildMinimalGraph =
       this.applicationStore.config.options.TEMPORARY__enableMinimalGraph;
     if (
@@ -391,7 +392,7 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
       } catch {
         // do nothing
       }
-      this.setIsFullGraphEnabled(true);
+      isLightGraphEnabled = false;
     }
     const dataSpace = getDataSpace(
       queryableDataSpace.dataSpacePath,
@@ -420,6 +421,7 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
       new QueryBuilderActionConfig_QueryApplication(this),
       dataSpace,
       executionContext,
+      isLightGraphEnabled,
       createDataSpaceDepoRepo(
         this,
         queryableDataSpace.groupId,

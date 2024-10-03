@@ -123,26 +123,32 @@ export const generateDefaultParameterValueForType = (
 
 export const generateFunctionCallString = (
   element: ConcreteFunctionDefinition,
-  options?: {
-    graph: PureModel;
-    functionInfo: FunctionAnalysisInfo | undefined;
-  },
 ): string => {
   let lambdaString = '';
-  const funcionInfo = options?.functionInfo;
-  const parameterLength = funcionInfo
-    ? funcionInfo.parameterInfoList.length
-    : element.parameters.length;
-  const functionName = funcionInfo?.functionName ?? element.functionName;
+  if (element.parameters.length > 0) {
+    for (let i = 0; i < element.parameters.length; i++) {
+      const paramType = element.parameters[i]?.type.value;
+      const separator = i !== element.parameters.length - 1 ? ', ' : '';
+      lambdaString =
+        lambdaString +
+        generateDefaultParameterValueForType(paramType, i) +
+        separator;
+    }
+  }
+  return `${element.package?.path}${ELEMENT_PATH_DELIMITER}${element.functionName}(${lambdaString})`;
+};
+
+export const generateFunctionCallStringFromFunctionAnalysisInfo = (
+  graph: PureModel,
+  functionInfo: FunctionAnalysisInfo,
+): string => {
+  let lambdaString = '';
+  const parameterLength = functionInfo.parameterInfoList.length;
   if (parameterLength > 0) {
     for (let i = 0; i < parameterLength; i++) {
       let paramType;
-      if (funcionInfo?.parameterInfoList[i] !== undefined) {
-        paramType = options?.graph.getType(
-          funcionInfo.parameterInfoList[i]!.type,
-        );
-      } else {
-        paramType = element.parameters[i]?.type.value;
+      if (functionInfo.parameterInfoList[i] !== undefined) {
+        paramType = graph.getType(functionInfo.parameterInfoList[i]!.type);
       }
       const separator = i !== parameterLength - 1 ? ', ' : '';
       lambdaString =
@@ -151,7 +157,7 @@ export const generateFunctionCallString = (
         separator;
     }
   }
-  return `${element.package?.path}${ELEMENT_PATH_DELIMITER}${functionName}(${lambdaString})`;
+  return `${functionInfo.packagePath}${ELEMENT_PATH_DELIMITER}${functionInfo.functionName}(${lambdaString})`;
 };
 
 export const generateFunctionPrettyName = (

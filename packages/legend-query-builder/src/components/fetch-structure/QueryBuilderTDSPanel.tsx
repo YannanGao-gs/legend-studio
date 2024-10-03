@@ -71,8 +71,7 @@ import { QUERY_BUILDER_TEST_ID } from '../../__lib__/QueryBuilderTesting.js';
 import { flowResult } from 'mobx';
 import { useApplicationStore } from '@finos/legend-application';
 import {
-  type ConcreteFunctionDefinition,
-  generateFunctionCallString,
+  type ValueSpecification,
   LAMBDA_PIPE,
   VARIABLE_REFERENCE_TOKEN,
   AbstractPropertyExpression,
@@ -81,12 +80,12 @@ import {
   PropertyExplicitReference,
   VariableExpression,
   Multiplicity,
-  type ValueSpecification,
   PrimitiveType,
   GenericType,
   GenericTypeExplicitReference,
   observe_PrimitiveInstanceValue,
   PrimitiveInstanceValue,
+  generateFunctionCallStringFromFunctionAnalysisInfo,
 } from '@finos/legend-graph';
 import {
   type QueryBuilderFunctionsExplorerDragSource,
@@ -239,20 +238,16 @@ const QueryBuilderDerivationProjectionColumnEditor = observer(
             }`,
           );
         } else if (type === QUERY_BUILDER_FUNCTION_DND_TYPE) {
-          const functionPrettyName = generateFunctionCallString(
-            (item as QueryBuilderFunctionsExplorerDragSource).node
-              .packageableElement as ConcreteFunctionDefinition,
-            {
-              graph:
+          const functionAnalysisInfo = (
+            item as QueryBuilderFunctionsExplorerDragSource
+          ).node.functionAnalysisInfo;
+          const functionPrettyName = functionAnalysisInfo
+            ? generateFunctionCallStringFromFunctionAnalysisInfo(
                 projectionColumnState.tdsState.queryBuilderState
                   .graphManagerState.graph,
-              functionInfo:
-                projectionColumnState.tdsState.queryBuilderState.functionsExplorerState.functionInfoMap?.get(
-                  (item as QueryBuilderFunctionsExplorerDragSource).node
-                    .packageableElement.path,
-                ),
-            },
-          );
+                functionAnalysisInfo,
+              )
+            : '';
           projectionColumnState.derivationLambdaEditorState.setLambdaString(
             `${
               projectionColumnState.derivationLambdaEditorState.lambdaString
@@ -1273,18 +1268,15 @@ export const QueryBuilderTDSPanel = observer(
                   { addDummyParameter: true },
                 ),
               );
-            const functionPrettyName = generateFunctionCallString(
-              (item as QueryBuilderFunctionsExplorerDragSource).node
-                .packageableElement as ConcreteFunctionDefinition,
-              {
-                graph: tdsState.queryBuilderState.graphManagerState.graph,
-                functionInfo:
-                  tdsState.queryBuilderState.functionsExplorerState.functionInfoMap?.get(
-                    (item as QueryBuilderFunctionsExplorerDragSource).node
-                      .packageableElement.path,
-                  ),
-              },
-            );
+            const functionAnalysisInfo = (
+              item as QueryBuilderFunctionsExplorerDragSource
+            ).node.functionAnalysisInfo;
+            const functionPrettyName = functionAnalysisInfo
+              ? generateFunctionCallStringFromFunctionAnalysisInfo(
+                  tdsState.queryBuilderState.graphManagerState.graph,
+                  functionAnalysisInfo,
+                )
+              : '';
             derivationProjectionColumn.derivationLambdaEditorState.setLambdaString(
               `${DEFAULT_LAMBDA_VARIABLE_NAME}${LAMBDA_PIPE}${functionPrettyName} `,
             );

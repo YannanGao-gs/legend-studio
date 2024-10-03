@@ -44,15 +44,13 @@ import {
 import {
   type QueryBuilderFunctionsExplorerTreeNodeData,
   type QueryBuilderFunctionsExplorerDragSource,
-  generateFunctionsExplorerTreeNodeData,
   getFunctionsExplorerTreeNodeChildren,
   QUERY_BUILDER_FUNCTION_DND_TYPE,
+  generateFunctionsExplorerTreeNodeDataFromFunctionAnalysisInfo,
 } from '../../stores/explorer/QueryFunctionsExplorerState.js';
 import { useDrag } from 'react-dnd';
 import {
   type FunctionAnalysisInfo,
-  ConcreteFunctionDefinition,
-  generateFunctionPrettyName,
   getElementRootPackage,
   Package,
   ROOT_PACKAGE_NAME,
@@ -66,17 +64,17 @@ import { QueryBuilderTelemetryHelper } from '../../__lib__/QueryBuilderTelemetry
 const isDependencyTreeNode = (
   node: QueryBuilderFunctionsExplorerTreeNodeData,
 ): boolean =>
-  getElementRootPackage(node.packageableElement).name ===
-  ROOT_PACKAGE_NAME.PROJECT_DEPENDENCY_ROOT;
+  node.package !== undefined &&
+  getElementRootPackage(node.package).name ===
+    ROOT_PACKAGE_NAME.PROJECT_DEPENDENCY_ROOT;
 
 const QueryBuilderFunctionInfoTooltip: React.FC<{
-  element: ConcreteFunctionDefinition;
   children: React.ReactElement;
   placement?: TooltipPlacement | undefined;
-  functionInfo?: FunctionAnalysisInfo | undefined;
+  functionInfo: FunctionAnalysisInfo;
 }> = (props) => {
-  const { element, children, placement, functionInfo } = props;
-  const documentation = element.taggedValues
+  const { children, placement, functionInfo } = props;
+  const documentation = functionInfo.taggedValues
     .filter(
       (taggedValue) =>
         taggedValue.tag.ownerReference.value.path ===
@@ -87,7 +85,7 @@ const QueryBuilderFunctionInfoTooltip: React.FC<{
 
   const generateParameterCallString = (): string => {
     if (
-      functionInfo?.parameterInfoList.length &&
+      functionInfo.parameterInfoList.length &&
       functionInfo.parameterInfoList.length > 0
     ) {
       return functionInfo.parameterInfoList
@@ -98,16 +96,8 @@ const QueryBuilderFunctionInfoTooltip: React.FC<{
             }${getMultiplicityDescription(param.multiplicity)}`,
         )
         .join('; ');
-    } else {
-      return element.parameters
-        .map(
-          (param) =>
-            `${param.name}: ${
-              param.type.value.name
-            }${getMultiplicityDescription(param.multiplicity)}`,
-        )
-        .join('; ');
     }
+    return '';
   };
 
   return (
@@ -129,7 +119,7 @@ const QueryBuilderFunctionInfoTooltip: React.FC<{
               Function Name
             </div>
             <div className="query-builder__tooltip__item__value">
-              {element.path}
+              {functionInfo.functionPath}
             </div>
           </div>
           <div className="query-builder__tooltip__item">
@@ -155,7 +145,7 @@ const QueryBuilderFunctionInfoTooltip: React.FC<{
               Return Type
             </div>
             <div className="query-builder__tooltip__item__value">
-              {functionInfo?.returnType ?? element.returnType.value.name}
+              {functionInfo.returnType}
             </div>
           </div>
         </div>
@@ -167,26 +157,10 @@ const QueryBuilderFunctionInfoTooltip: React.FC<{
 };
 
 const QueryBuilderFunctionsExplorerListEntry = observer(
-  (props: {
-    queryBuilderState: QueryBuilderState;
-    element: ConcreteFunctionDefinition;
-    rootPackageName: ROOT_PACKAGE_NAME;
-  }) => {
-    const { queryBuilderState, element, rootPackageName } = props;
-    const node = generateFunctionsExplorerTreeNodeData(
-      queryBuilderState,
-      element,
-      rootPackageName,
-    );
-    const functionInfo =
-      queryBuilderState.functionsExplorerState.functionInfoMap?.get(
-        element.path,
-      );
-    const functionPrettyName =
-      functionInfo?.functionPrettyName ??
-      generateFunctionPrettyName(element, {
-        fullPath: true,
-      });
+  (props: { element: FunctionAnalysisInfo }) => {
+    const { element } = props;
+    const node =
+      generateFunctionsExplorerTreeNodeDataFromFunctionAnalysisInfo(element);
     const [, dragConnector, dragPreviewConnector] = useDrag(
       () => ({
         type: QUERY_BUILDER_FUNCTION_DND_TYPE,
@@ -209,16 +183,13 @@ const QueryBuilderFunctionsExplorerListEntry = observer(
           </div>
           <div
             className="query-builder__functions-explorer__function__label"
-            title={functionPrettyName}
+            title={element.functionPrettyName}
           >
-            {functionPrettyName}
+            {element.functionPrettyName}
           </div>
         </div>
         <div className="query-builder__functions-explorer__function__actions">
-          <QueryBuilderFunctionInfoTooltip
-            element={node.packageableElement as ConcreteFunctionDefinition}
-            functionInfo={functionInfo}
-          >
+          <QueryBuilderFunctionInfoTooltip functionInfo={element}>
             <div className="query-builder__functions-explorer__function__action query-builder__functions-explorer__function__node__info">
               <InfoCircleIcon />
             </div>
@@ -238,18 +209,13 @@ const QueryBuilderFunctionsExplorerTreeNodeContainer = observer(
       }
     >,
   ) => {
-    const { node, level, stepPaddingInRem, onNodeSelect, innerProps } = props;
-    const isPackage = node.packageableElement instanceof Package;
-    const functionInfo =
-      innerProps.queryBuilderState.functionsExplorerState.functionInfoMap?.get(
-        node.packageableElement.path,
-      );
-    const name =
-      node.packageableElement instanceof ConcreteFunctionDefinition
-        ? (functionInfo?.functionPrettyName.split(
-            `${functionInfo.packagePath}::`,
-          )[1] ?? generateFunctionPrettyName(node.packageableElement))
-        : node.packageableElement.name;
+    const { node, level, stepPaddingInRem, onNodeSelect } = props;
+    const isPackage = node.package instanceof Package;
+    const name = node.functionAnalysisInfo
+      ? node.functionAnalysisInfo.functionPrettyName.split(
+          `${node.functionAnalysisInfo.packagePath}::`,
+        )[1]
+      : (node.package?.name ?? '');
     const isExpandable = Boolean(node.childrenIds.length);
     const nodeExpandIcon = isExpandable ? (
       node.isOpen ? (
@@ -281,10 +247,7 @@ const QueryBuilderFunctionsExplorerTreeNodeContainer = observer(
     }>(
       () => ({
         type: QUERY_BUILDER_FUNCTION_DND_TYPE,
-        item: () =>
-          node.packageableElement instanceof ConcreteFunctionDefinition
-            ? { node }
-            : {},
+        item: () => (node.functionAnalysisInfo ? { node } : {}),
       }),
       [node],
     );
@@ -322,11 +285,9 @@ const QueryBuilderFunctionsExplorerTreeNodeContainer = observer(
                 {name}
               </div>
               <div className="query-builder__functions-explorer__tree__node__actions">
-                {node.packageableElement instanceof
-                  ConcreteFunctionDefinition && (
+                {node.functionAnalysisInfo && (
                   <QueryBuilderFunctionInfoTooltip
-                    element={node.packageableElement}
-                    functionInfo={functionInfo}
+                    functionInfo={node.functionAnalysisInfo}
                   >
                     <div className="query-builder__functions-explorer__tree__node__action query-builder__functions-explorer__tree__node__info">
                       <InfoCircleIcon />
@@ -527,19 +488,9 @@ export const QueryBuilderFunctionsExplorerPanel = observer(
           <DragPreviewLayer
             labelGetter={(
               item: QueryBuilderFunctionsExplorerDragSource,
-            ): string => {
-              const functionInfo =
-                queryBuilderState.functionsExplorerState.functionInfoMap?.get(
-                  item.node.packageableElement.path,
-                );
-              return (
-                functionInfo?.functionPrettyName ??
-                generateFunctionPrettyName(
-                  item.node.packageableElement as ConcreteFunctionDefinition,
-                  { fullPath: true },
-                )
-              );
-            }}
+            ): string =>
+              item.node.functionAnalysisInfo?.functionPrettyName ?? ''
+            }
             types={[QUERY_BUILDER_FUNCTION_DND_TYPE]}
           />
           {((showDependencyFuncions &&
@@ -579,9 +530,7 @@ export const QueryBuilderFunctionsExplorerPanel = observer(
                 (funcExplorerState) => (
                   <QueryBuilderFunctionsExplorerListEntry
                     key={funcExplorerState.uuid}
-                    queryBuilderState={queryBuilderState}
-                    element={funcExplorerState.concreteFunctionDefinition}
-                    rootPackageName={ROOT_PACKAGE_NAME.MAIN}
+                    element={funcExplorerState.functionAnalysisInfo}
                   />
                 ),
               )}
@@ -596,11 +545,7 @@ export const QueryBuilderFunctionsExplorerPanel = observer(
                       (funcExplorerState) => (
                         <QueryBuilderFunctionsExplorerListEntry
                           key={funcExplorerState.uuid}
-                          queryBuilderState={queryBuilderState}
-                          element={funcExplorerState.concreteFunctionDefinition}
-                          rootPackageName={
-                            ROOT_PACKAGE_NAME.PROJECT_DEPENDENCY_ROOT
-                          }
+                          element={funcExplorerState.functionAnalysisInfo}
                         />
                       ),
                     )}

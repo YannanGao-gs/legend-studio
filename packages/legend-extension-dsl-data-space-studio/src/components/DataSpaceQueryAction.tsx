@@ -54,6 +54,7 @@ export const queryDataSpace = async (
           QueryBuilderActionConfig.INSTANCE,
           dataSpace,
           dataSpace.defaultExecutionContext,
+          false,
           undefined,
           async (dataSpaceInfo: DataSpaceInfo) => {
             queryBuilderState.dataSpace = guaranteeType(

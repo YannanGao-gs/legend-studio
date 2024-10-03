@@ -827,7 +827,7 @@ export class Core_LegendQueryApplicationPlugin extends LegendQueryApplicationPlu
           ) {
             if (
               !isGraphBuildingNotRequired &&
-              !editorStore.isFullGraphEnabled
+              dataSpaceQueryBuilderState.isLightGraphEnabled
             ) {
               const supportBuildMinimalGraph =
                 editorStore.applicationStore.config.options
