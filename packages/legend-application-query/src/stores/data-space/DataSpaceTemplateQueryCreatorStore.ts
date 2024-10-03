@@ -18,6 +18,7 @@ import {
   type Query,
   type QuerySearchSpecification,
   type RawLambda,
+  CORE_PURE_PATH,
   GRAPH_MANAGER_EVENT,
   QueryProjectCoordinates,
   createGraphBuilderReport,
@@ -25,6 +26,7 @@ import {
 } from '@finos/legend-graph';
 import {
   type DepotServerClient,
+  retrieveProjectEntitiesWithClassifier,
   retrieveProjectEntitiesWithDependencies,
   StoreProjectData,
 } from '@finos/legend-server-depot';
@@ -145,6 +147,13 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
               this.depotServerClient,
             ),
           () =>
+            retrieveProjectEntitiesWithClassifier(
+              project,
+              this.versionId,
+              CORE_PURE_PATH.FUNCTION,
+              this.depotServerClient,
+            ),
+          () =>
             retrieveAnalyticsResultCache(
               project,
               this.versionId,
@@ -158,7 +167,6 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
           undefined,
           this.getProjectInfo(),
           this.applicationStore.notificationService,
-          this.depotServerClient,
         );
         const mappingPath = dataSpaceAnalysisResult.executionContextsIndex.get(
           this.executionContext,

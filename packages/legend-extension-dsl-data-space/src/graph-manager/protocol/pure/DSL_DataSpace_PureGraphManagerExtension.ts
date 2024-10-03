@@ -29,7 +29,6 @@ import {
 } from '@finos/legend-shared';
 import type { DataSpaceAnalysisResult } from '../../action/analytics/DataSpaceAnalysis.js';
 import type { NotificationService } from '@finos/legend-application';
-import type { DepotServerClient } from '@finos/legend-server-depot';
 
 export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPureGraphManagerExtension {
   abstract analyzeDataSpace(
@@ -47,6 +46,9 @@ export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPu
   abstract analyzeDataSpaceCoverage(
     dataSpacePath: string,
     entitiesRetriever: () => Promise<Entity[]>,
+    entitiesWithClassifierRetriever: () => Promise<
+      [PlainObject<Entity>[], PlainObject<Entity>[]]
+    >,
     cacheRetriever?: () => Promise<PlainObject<DataSpaceAnalysisResult>>,
     actionState?: ActionState,
     graphReport?: GraphManagerOperationReport | undefined,
@@ -55,7 +57,6 @@ export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPu
     mappingPath?: string | undefined,
     projectInfo?: ProjectGAVCoordinates,
     notificationService?: NotificationService | undefined,
-    depotServerClient?: DepotServerClient,
   ): Promise<DataSpaceAnalysisResult>;
 
   abstract addNewExecutableToDataSpaceEntity(

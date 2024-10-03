@@ -24,12 +24,14 @@ import {
   QueryProjectCoordinates,
   createGraphBuilderReport,
   GRAPH_MANAGER_EVENT,
+  CORE_PURE_PATH,
 } from '@finos/legend-graph';
 import {
   type DepotServerClient,
   StoreProjectData,
   LATEST_VERSION_ALIAS,
   retrieveProjectEntitiesWithDependencies,
+  retrieveProjectEntitiesWithClassifier,
 } from '@finos/legend-server-depot';
 import {
   LogEvent,
@@ -316,6 +318,13 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
               this.depotServerClient,
             ),
           () =>
+            retrieveProjectEntitiesWithClassifier(
+              project,
+              queryableDataSpace.versionId,
+              CORE_PURE_PATH.FUNCTION,
+              this.depotServerClient,
+            ),
+          () =>
             retrieveAnalyticsResultCache(
               project,
               queryableDataSpace.versionId,
@@ -329,7 +338,6 @@ export class DataSpaceQueryCreatorStore extends QueryEditorStore {
           undefined,
           this.getProjectInfo(),
           this.applicationStore.notificationService,
-          this.depotServerClient,
         );
         const mappingPath = dataSpaceAnalysisResult.executionContextsIndex.get(
           queryableDataSpace.executionContext,

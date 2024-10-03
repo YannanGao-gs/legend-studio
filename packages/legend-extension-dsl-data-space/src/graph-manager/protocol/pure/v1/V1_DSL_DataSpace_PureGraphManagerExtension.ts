@@ -41,12 +41,12 @@ import {
   LegendSDLC,
   PackageableElementPointerType,
   V1_PackageableElementPointer,
-  CORE_PURE_PATH,
   V1_buildFunctionInfoAnalysis,
   V1_ConcreteFunctionDefinition,
 } from '@finos/legend-graph';
 import type { Entity, ProjectGAVCoordinates } from '@finos/legend-storage';
 import {
+  type PlainObject,
   ActionState,
   assertErrorThrown,
   filterByType,
@@ -56,7 +56,6 @@ import {
   isNonNullable,
   LogEvent,
   uniq,
-  type PlainObject,
 } from '@finos/legend-shared';
 import {
   DataSpaceSupportCombinedInfo,
@@ -105,11 +104,7 @@ import {
   V1_DataSpaceFunctionPointerExecutableInfo,
 } from './engine/analytics/V1_DataSpaceAnalysis.js';
 import { getDiagram } from '@finos/legend-extension-dsl-diagram/graph';
-import {
-  type DepotServerClient,
-  resolveVersion,
-  StoreProjectData,
-} from '@finos/legend-server-depot';
+import { resolveVersion } from '@finos/legend-server-depot';
 import type { NotificationService } from '@finos/legend-application';
 
 const ANALYZE_DATA_SPACE_TRACE = 'analyze data space';
@@ -237,6 +232,9 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
   async analyzeDataSpaceCoverage(
     dataSpacePath: string,
     entitiesRetriever: () => Promise<Entity[]>,
+    entitiesWithClassifierRetriever: () => Promise<
+      [PlainObject<Entity>[], PlainObject<Entity>[]]
+    >,
     cacheRetriever?: () => Promise<PlainObject<DataSpaceAnalysisResult>>,
     actionState?: ActionState,
     graphReport?: GraphManagerOperationReport | undefined,
@@ -245,7 +243,6 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
     mappingPath?: string | undefined,
     projectInfo?: ProjectGAVCoordinates,
     notificationService?: NotificationService | undefined,
-    depotServerClient?: DepotServerClient,
   ): Promise<DataSpaceAnalysisResult> {
     const cacheResult = cacheRetriever
       ? await this.fetchDataSpaceAnalysisFromCache(cacheRetriever, actionState)
@@ -307,7 +304,7 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
       executionContext,
       mappingPath,
       projectInfo,
-      depotServerClient,
+      entitiesWithClassifierRetriever,
     );
   }
 
@@ -349,35 +346,17 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
 
   // build function analysis info by fetching functions within this project from metadata when building minimal graph
   async processFunctionForMinimalGraph(
-    groupId: string,
-    artifactId: string,
-    versionId: string,
+    entitiesWithClassifierRetriever: () => Promise<
+      [PlainObject<Entity>[], PlainObject<Entity>[]]
+    >,
     graph: PureModel,
     dataSpaceAnalysisResult: DataSpaceAnalysisResult,
     plugins: PureProtocolProcessorPlugin[],
-    depotServerClient: DepotServerClient,
   ): Promise<void> {
-    const project = StoreProjectData.serialization.fromJson(
-      await depotServerClient.getProject(groupId, artifactId),
-    );
     const [functionEntities, dependencyFunctionEntities]: [
       PlainObject<Entity>[],
       PlainObject<Entity>[],
-    ] = await Promise.all([
-      depotServerClient.getEntities(
-        project,
-        versionId,
-        CORE_PURE_PATH.FUNCTION,
-      ),
-      depotServerClient.getDependencyEntities(
-        groupId,
-        artifactId,
-        versionId,
-        false,
-        false,
-        CORE_PURE_PATH.FUNCTION,
-      ),
-    ]);
+    ] = await entitiesWithClassifierRetriever();
     const functionProtocols = functionEntities.map((func) =>
       guaranteeType(
         V1_deserializePackageableElement(
@@ -429,7 +408,9 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
     executionContext?: string | undefined,
     mappingPath?: string | undefined,
     projectInfo?: ProjectGAVCoordinates,
-    depotServerClient?: DepotServerClient,
+    entitiesWithClassifierRetriever?: () => Promise<
+      [PlainObject<Entity>[], PlainObject<Entity>[]]
+    >,
   ): Promise<DataSpaceAnalysisResult> {
     const analysisResult = V1_deserializeDataSpaceAnalysisResult(
       analytics,
@@ -595,16 +576,13 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
         },
         graphReport,
       );
-      if (depotServerClient) {
+      if (entitiesWithClassifierRetriever) {
         try {
           await this.processFunctionForMinimalGraph(
-            projectInfo.groupId,
-            projectInfo.artifactId,
-            projectInfo.versionId,
+            entitiesWithClassifierRetriever,
             graph,
             result,
             plugins,
-            depotServerClient,
           );
         } catch {
           //do nothing

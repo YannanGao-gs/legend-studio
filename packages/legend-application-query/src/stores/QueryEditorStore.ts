@@ -71,6 +71,7 @@ import {
   buildLambdaVariableExpressions,
   VariableExpression,
   PrimitiveType,
+  CORE_PURE_PATH,
 } from '@finos/legend-graph';
 import {
   generateExistingQueryEditorRoute,
@@ -91,6 +92,7 @@ import {
   LATEST_VERSION_ALIAS,
   VersionedProjectData,
   retrieveProjectEntitiesWithDependencies,
+  retrieveProjectEntitiesWithClassifier,
 } from '@finos/legend-server-depot';
 import {
   ActionAlertActionType,
@@ -1341,6 +1343,13 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
                   this.depotServerClient,
                 ),
               () =>
+                retrieveProjectEntitiesWithClassifier(
+                  project,
+                  query.versionId,
+                  CORE_PURE_PATH.FUNCTION,
+                  this.depotServerClient,
+                ),
+              () =>
                 retrieveAnalyticsResultCache(
                   project,
                   query.versionId,
@@ -1354,7 +1363,6 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
               undefined,
               this.getProjectInfo(),
               this.applicationStore.notificationService,
-              this.depotServerClient,
             );
           // report
           stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
