@@ -166,33 +166,36 @@ export class DataSpaceTemplateQueryCreatorStore extends QueryEditorStore {
           this.executionContext,
           undefined,
           this.getProjectInfo(),
-          this.applicationStore.notificationService,
         );
         const mappingPath = dataSpaceAnalysisResult.executionContextsIndex.get(
           this.executionContext,
-        )?.mapping;
+        )?.mapping.path;
         if (mappingPath) {
-          // report
-          stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
-          const graphBuilderReportData = {
-            timings:
-              this.applicationStore.timeService.finalizeTimingsRecord(
-                stopWatch,
-              ),
-            dependencies: dependency_buildReport,
-            dependenciesCount:
-              this.graphManagerState.graph.dependencyManager
-                .numberOfDependencies,
-            graph: graph_buildReport,
-          };
-          this.applicationStore.logService.info(
-            LogEvent.create(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS),
-            graphBuilderReportData,
-          );
-        } else {
-          this.graphManagerState.graph =
-            this.graphManagerState.createNewGraph();
-          await flowResult(this.buildFullGraph());
+          const pmcd =
+            dataSpaceAnalysisResult.mappingToMappingCoverageResult?.get(
+              mappingPath,
+            )?.entities;
+          if (pmcd) {
+            // report
+            stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);
+            const graphBuilderReportData = {
+              timings:
+                this.applicationStore.timeService.finalizeTimingsRecord(
+                  stopWatch,
+                ),
+              dependencies: dependency_buildReport,
+              dependenciesCount:
+                this.graphManagerState.graph.dependencyManager
+                  .numberOfDependencies,
+              graph: graph_buildReport,
+            };
+            this.applicationStore.logService.info(
+              LogEvent.create(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS),
+              graphBuilderReportData,
+            );
+          } else {
+            buildFullGraph = true;
+          }
         }
       } catch (error) {
         buildFullGraph = true;

@@ -105,7 +105,6 @@ import {
 } from './engine/analytics/V1_DataSpaceAnalysis.js';
 import { getDiagram } from '@finos/legend-extension-dsl-diagram/graph';
 import { resolveVersion } from '@finos/legend-server-depot';
-import type { NotificationService } from '@finos/legend-application';
 
 const ANALYZE_DATA_SPACE_TRACE = 'analyze data space';
 const TEMPORARY__TDS_SAMPLE_VALUES__DELIMETER = '-- e.g.';
@@ -242,7 +241,6 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
     executionContext?: string | undefined,
     mappingPath?: string | undefined,
     projectInfo?: ProjectGAVCoordinates,
-    notificationService?: NotificationService | undefined,
   ): Promise<DataSpaceAnalysisResult> {
     const cacheResult = cacheRetriever
       ? await this.fetchDataSpaceAnalysisFromCache(cacheRetriever, actionState)
@@ -271,9 +269,6 @@ export class V1_DSL_DataSpace_PureGraphManagerExtension extends DSL_DataSpace_Pu
     ) {
       analysisResult = cacheResult;
     } else {
-      notificationService?.notify(
-        `Please release a new version of the project and create a new query from that to reduce the load time`,
-      );
       actionState?.setMessage('Fetching project entities and dependencies...');
       const entities = await entitiesRetriever();
       actionState?.setMessage('Analyzing data space...');

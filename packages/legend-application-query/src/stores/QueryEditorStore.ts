@@ -1362,7 +1362,6 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
               exec.executionKey,
               undefined,
               this.getProjectInfo(),
-              this.applicationStore.notificationService,
             );
           // report
           stopWatch.record(GRAPH_MANAGER_EVENT.INITIALIZE_GRAPH__SUCCESS);

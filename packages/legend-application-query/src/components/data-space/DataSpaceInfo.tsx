@@ -102,8 +102,6 @@ export const QueryEditorDataspaceInfoModal = observer(
       executionContext.name,
     )?.runtimeMetadata;
     const connection =
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      executionContext.defaultRuntime.value.runtimeValue !== undefined &&
       executionContext.defaultRuntime.value.runtimeValue.connections.length > 0
         ? executionContext.defaultRuntime.value.runtimeValue.connections[0]
             ?.storeConnections?.[0]?.connection instanceof ConnectionPointer

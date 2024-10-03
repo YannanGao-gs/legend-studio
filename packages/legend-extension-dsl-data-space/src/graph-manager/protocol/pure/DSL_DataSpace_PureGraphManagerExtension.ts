@@ -28,7 +28,6 @@ import {
   type PlainObject,
 } from '@finos/legend-shared';
 import type { DataSpaceAnalysisResult } from '../../action/analytics/DataSpaceAnalysis.js';
-import type { NotificationService } from '@finos/legend-application';
 
 export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPureGraphManagerExtension {
   abstract analyzeDataSpace(
@@ -56,7 +55,6 @@ export abstract class DSL_DataSpace_PureGraphManagerExtension extends AbstractPu
     executionContext?: string | undefined,
     mappingPath?: string | undefined,
     projectInfo?: ProjectGAVCoordinates,
-    notificationService?: NotificationService | undefined,
   ): Promise<DataSpaceAnalysisResult>;
 
   abstract addNewExecutableToDataSpaceEntity(

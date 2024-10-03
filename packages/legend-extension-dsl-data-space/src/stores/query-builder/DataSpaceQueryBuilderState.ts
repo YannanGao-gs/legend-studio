@@ -32,7 +32,6 @@ import {
   Package,
   QueryDataSpaceExecutionContext,
   elementBelongsToPackage,
-  Service,
 } from '@finos/legend-graph';
 import {
   type DepotServerClient,
@@ -49,18 +48,17 @@ import {
 import { action, flow, makeObservable, observable } from 'mobx';
 import { renderDataSpaceQueryBuilderSetupPanelContent } from '../../components/query-builder/DataSpaceQueryBuilder.js';
 import {
-  type DataSpaceExecutionContext,
-  DataSpace,
   type DataSpaceElement,
-  DataSpaceExecutable,
-  DataSpacePackageableElementExecutable,
+  type DataSpaceExecutionContext,
+  type DataSpaceExecutable,
+  DataSpace,
 } from '../../graph/metamodel/pure/model/packageableElements/dataSpace/DSL_DataSpace_DataSpace.js';
 import { DATA_SPACE_ELEMENT_CLASSIFIER_PATH } from '../../graph-manager/protocol/pure/DSL_DataSpace_PureProtocolProcessorPlugin.js';
 import { DataSpaceAdvancedSearchState } from '../query/DataSpaceAdvancedSearchState.js';
 import {
+  type DataSpaceExecutableAnalysisResult,
   DataSpaceServiceExecutableInfo,
   type DataSpaceAnalysisResult,
-  type DataSpaceExecutableAnalysisResult,
 } from '../../graph-manager/action/analytics/DataSpaceAnalysis.js';
 import {
   type DataSpaceInfo,
@@ -68,6 +66,7 @@ import {
 } from '../shared/DataSpaceInfo.js';
 import type { ProjectGAVCoordinates } from '@finos/legend-storage';
 import { generateDataSpaceTemplateQueryCreatorRoute } from '../../__lib__/to-delete/DSL_DataSpace_LegendQueryNavigation_to_delete.js';
+import { buildDataSpaceExecutableAnalysisResultFromExecutable } from '../../graph-manager/action/analytics/DataSpaceAnalysisHelper.js';
 
 const matchesDataElement = (
   _class: Class,
@@ -168,7 +167,7 @@ export abstract class DataSpacesBuilderRepoistory {
   abstract loadDataSpaces(): GeneratorFn<void>;
   abstract visitTemplateQuery(
     dataSpace: DataSpace,
-    template: DataSpaceExecutableAnalysisResult | DataSpaceExecutable,
+    template: DataSpaceExecutableAnalysisResult,
   ): void;
 
   configureDataSpaceOptions(val: DataSpaceInfo[]): void {
@@ -275,10 +274,10 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
 
   override visitTemplateQuery(
     dataSpace: DataSpace,
-    template: DataSpaceExecutableAnalysisResult | DataSpaceExecutable,
+    template: DataSpaceExecutableAnalysisResult,
   ): void {
-    if (template instanceof DataSpaceExecutable) {
-      if (template.id) {
+    if (template.info) {
+      if (template.info.id) {
         this.applicationStore.navigationService.navigator.visitAddress(
           this.applicationStore.navigationService.navigator.generateAddress(
             generateDataSpaceTemplateQueryCreatorRoute(
@@ -286,16 +285,15 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
               this.project.artifactId,
               this.project.versionId,
               dataSpace.path,
-              template.executionContextKey ??
-                dataSpace.defaultExecutionContext.name,
-              template.id,
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              template.info.executionContextKey === undefined
+                ? dataSpace.defaultExecutionContext.name
+                : template.info.executionContextKey,
+              template.info.id,
             ),
           ),
         );
-      } else if (
-        template instanceof DataSpacePackageableElementExecutable &&
-        template.executable.value instanceof Service
-      ) {
+      } else if (template.info instanceof DataSpaceServiceExecutableInfo) {
         this.applicationStore.navigationService.navigator.visitAddress(
           this.applicationStore.navigationService.navigator.generateAddress(
             generateDataSpaceTemplateQueryCreatorRoute(
@@ -303,9 +301,11 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
               this.project.artifactId,
               this.project.versionId,
               dataSpace.path,
-              template.executionContextKey ??
-                dataSpace.defaultExecutionContext.name,
-              template.executable.value.path,
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              template.info.executionContextKey === undefined
+                ? dataSpace.defaultExecutionContext.name
+                : template.info.executionContextKey,
+              template.executable ?? template.info.pattern,
             ),
           ),
         );
@@ -315,49 +315,9 @@ export class DataSpacesDepotRepository extends DataSpacesBuilderRepoistory {
         );
       }
     } else {
-      if (template.info) {
-        if (template.info.id) {
-          this.applicationStore.navigationService.navigator.visitAddress(
-            this.applicationStore.navigationService.navigator.generateAddress(
-              generateDataSpaceTemplateQueryCreatorRoute(
-                this.project.groupId,
-                this.project.artifactId,
-                this.project.versionId,
-                dataSpace.path,
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                template.info.executionContextKey === undefined
-                  ? dataSpace.defaultExecutionContext.name
-                  : template.info.executionContextKey,
-                template.info.id,
-              ),
-            ),
-          );
-        } else if (template.info instanceof DataSpaceServiceExecutableInfo) {
-          this.applicationStore.navigationService.navigator.visitAddress(
-            this.applicationStore.navigationService.navigator.generateAddress(
-              generateDataSpaceTemplateQueryCreatorRoute(
-                this.project.groupId,
-                this.project.artifactId,
-                this.project.versionId,
-                dataSpace.path,
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                template.info.executionContextKey === undefined
-                  ? dataSpace.defaultExecutionContext.name
-                  : template.info.executionContextKey,
-                template.executable ?? template.info.pattern,
-              ),
-            ),
-          );
-        } else {
-          this.applicationStore.notificationService.notifyWarning(
-            `Can't visit tempalte query without a Id`,
-          );
-        }
-      } else {
-        this.applicationStore.notificationService.notifyWarning(
-          `Can't visit tempalte query without a Id`,
-        );
-      }
+      this.applicationStore.notificationService.notifyWarning(
+        `Can't visit tempalte query without a Id`,
+      );
     }
   }
 
@@ -430,6 +390,7 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
   showRuntimeSelector = false;
   isTemplateQueryDialogOpen = false;
   isLightGraphEnabled!: boolean;
+  displayedTemplateQueries: DataSpaceExecutableAnalysisResult[] | undefined;
 
   constructor(
     applicationStore: GenericLegendApplicationStore,
@@ -457,10 +418,12 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
       showRuntimeSelector: observable,
       isTemplateQueryDialogOpen: observable,
       isLightGraphEnabled: observable,
+      displayedTemplateQueries: observable,
       setExecutionContext: action,
       setShowRuntimeSelector: action,
       setTemplateQueryDialogOpen: action,
       setIsLightGraphEnabled: action,
+      intialize: flow,
     });
 
     this.dataSpace = dataSpace;
@@ -506,5 +469,18 @@ export class DataSpaceQueryBuilderState extends QueryBuilderState {
 
   setIsLightGraphEnabled(val: boolean): void {
     this.isLightGraphEnabled = val;
+  }
+
+  *intialize(): GeneratorFn<void> {
+    this.displayedTemplateQueries =
+      this.dataSpace.executables && this.dataSpace.executables.length > 0
+        ? ((yield buildDataSpaceExecutableAnalysisResultFromExecutable(
+            this.dataSpace,
+            this.dataSpace.executables,
+            this.graphManagerState,
+          )) as DataSpaceExecutableAnalysisResult[])
+        : this.dataSpaceAnalysisResult?.executables.filter(
+            (ex) => ex.info !== undefined,
+          );
   }
 }

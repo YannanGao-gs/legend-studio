@@ -22,7 +22,7 @@ import {
   TagIcon,
 } from '@finos/legend-art';
 import { observer } from 'mobx-react-lite';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   ActionAlertActionType,
   ActionAlertType,
@@ -33,19 +33,12 @@ import type { DataSpaceQueryBuilderState } from '../../stores/query-builder/Data
 import { DSL_DATA_SPACE_LEGEND_QUERY_DOCUMENTATION_KEY } from '../../__lib__/query/DSL_DataSpace_LegendQueryDocumentation.js';
 import { flowResult } from 'mobx';
 import type { DataSpaceExecutableAnalysisResult } from '../../graph-manager/action/analytics/DataSpaceAnalysis.js';
-import { DataSpaceExecutable } from '../../graph/metamodel/pure/model/packageableElements/dataSpace/DSL_DataSpace_DataSpace.js';
-import {
-  getExecutionContextFromDataspaceExecutable,
-  getQueryFromDataspaceExecutable,
-} from '../../graph-manager/DSL_DataSpace_GraphManagerHelper.js';
 
 const DataSpaceTemplateQueryDialog = observer(
   (props: {
     triggerElement: HTMLElement | null;
     queryBuilderState: DataSpaceQueryBuilderState;
-    templateQueries:
-      | DataSpaceExecutableAnalysisResult[]
-      | DataSpaceExecutable[];
+    templateQueries: DataSpaceExecutableAnalysisResult[];
   }) => {
     const { triggerElement, queryBuilderState, templateQueries } = props;
     const applicationStore = useApplicationStore();
@@ -54,76 +47,41 @@ const DataSpaceTemplateQueryDialog = observer(
     };
 
     const loadTemplateQuery = async (
-      template: DataSpaceExecutableAnalysisResult | DataSpaceExecutable,
+      template: DataSpaceExecutableAnalysisResult,
     ): Promise<void> => {
-      if (template instanceof DataSpaceExecutable) {
-        const executionContext = getExecutionContextFromDataspaceExecutable(
-          queryBuilderState.dataSpace,
-          template,
-        );
-        if (!executionContext) {
-          applicationStore.notificationService.notifyError(
-            'Unable find an executionContext of this template query within current dataspace',
+      let query;
+      if (template.info) {
+        query =
+          await queryBuilderState.graphManagerState.graphManager.pureCodeToLambda(
+            template.info.query,
           );
-        }
-        const query = getQueryFromDataspaceExecutable(
-          template,
-          queryBuilderState.graphManagerState,
+      }
+      if (!query) {
+        applicationStore.notificationService.notifyError(
+          'Unable get a query from this template query',
         );
-        if (!query) {
-          applicationStore.notificationService.notifyError(
-            'Unable get a query from this template query',
-          );
-        }
+      } else {
+        const executionContext =
+          queryBuilderState.dataSpace.executionContexts.filter(
+            (ex) => ex.name === template.info?.executionContextKey,
+          )[0];
         if (
-          query &&
           executionContext &&
-          executionContext.hashCode !==
-            queryBuilderState.executionContext.hashCode
+          executionContext.name !== queryBuilderState.executionContext.name
         ) {
           queryBuilderState.setExecutionContext(executionContext);
           await queryBuilderState.propagateExecutionContextChange();
           queryBuilderState.initializeWithQuery(query);
           queryBuilderState.onExecutionContextChange?.(executionContext);
-        } else if (query) {
+        } else {
           queryBuilderState.initializeWithQuery(query);
         }
-        handleClose();
-      } else {
-        let query;
-        if (template.info) {
-          query =
-            await queryBuilderState.graphManagerState.graphManager.pureCodeToLambda(
-              template.info.query,
-            );
-        }
-        if (!query) {
-          applicationStore.notificationService.notifyError(
-            'Unable get a query from this template query',
-          );
-        } else {
-          const executionContext =
-            queryBuilderState.dataSpace.executionContexts.filter(
-              (ex) => ex.name === template.info?.executionContextKey,
-            )[0];
-          if (
-            executionContext &&
-            executionContext.name !== queryBuilderState.executionContext.name
-          ) {
-            queryBuilderState.setExecutionContext(executionContext);
-            await queryBuilderState.propagateExecutionContextChange();
-            queryBuilderState.initializeWithQuery(query);
-            queryBuilderState.onExecutionContextChange?.(executionContext);
-          } else {
-            queryBuilderState.initializeWithQuery(query);
-          }
-        }
-        handleClose();
       }
+      handleClose();
     };
 
     const loadQuery = async (
-      template: DataSpaceExecutableAnalysisResult | DataSpaceExecutable,
+      template: DataSpaceExecutableAnalysisResult,
     ): Promise<void> => {
       if (queryBuilderState.changeDetectionState.hasChanged) {
         applicationStore.alertService.setActionAlertInfo({
@@ -153,7 +111,7 @@ const DataSpaceTemplateQueryDialog = observer(
     };
 
     const visitTemplateQuery = (
-      template: DataSpaceExecutableAnalysisResult | DataSpaceExecutable,
+      template: DataSpaceExecutableAnalysisResult,
     ): void => {
       if (queryBuilderState.dataSpaceRepo.canVisitTemplateQuery) {
         queryBuilderState.dataSpaceRepo.visitTemplateQuery(
@@ -244,18 +202,17 @@ const DataSpaceTemplateQueryDialog = observer(
 const DataSpaceQueryBuilderTemplateQueryPanel = observer(
   (props: { queryBuilderState: DataSpaceQueryBuilderState }) => {
     const { queryBuilderState } = props;
+    const applicationStore = useApplicationStore();
     const templateQueryButtonRef = useRef<HTMLButtonElement>(null);
-    const templateQueries =
-      queryBuilderState.dataSpace.executables &&
-      queryBuilderState.dataSpace.executables.length > 0
-        ? queryBuilderState.dataSpace.executables
-        : queryBuilderState.dataSpaceAnalysisResult?.executables.filter(
-            (ex) => ex.info !== undefined,
-          );
-
     const showTemplateQueries = (): void => {
       queryBuilderState.setTemplateQueryDialogOpen(true);
     };
+    const templateQueries = queryBuilderState.displayedTemplateQueries;
+    useEffect(() => {
+      flowResult(queryBuilderState.intialize()).catch(
+        applicationStore.alertUnhandledError,
+      );
+    }, [queryBuilderState, applicationStore.alertUnhandledError]);
 
     return (
       <>
