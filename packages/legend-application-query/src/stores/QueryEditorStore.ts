@@ -1584,7 +1584,9 @@ export class ExistingQueryEditorStore extends QueryEditorStore {
         exec.mapping.value,
       );
       classQueryBuilderState.executionContextState.setRuntimeValue(
-        exec.runtime.value,
+        new RuntimePointer(
+          PackageableElementExplicitReference.create(exec.runtime.value),
+        ),
       );
       return classQueryBuilderState;
     }
