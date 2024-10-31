@@ -326,10 +326,12 @@ import {
  * trigger
  **********/
 
+// here
 export const V1_transformTrigger = (
   element: Trigger,
   context: V1_GraphTransformerContext,
 ): V1_Trigger => {
+  // here
   const extraTriggerTransformers = context.plugins.flatMap(
     (plugin) =>
       (

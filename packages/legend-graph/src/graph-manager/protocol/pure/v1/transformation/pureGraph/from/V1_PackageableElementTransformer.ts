@@ -184,6 +184,7 @@ class V1_PackageableElementTransformer
       V1_transformSnowflakeAppDeploymentConfiguration(
         element.activationConfiguration,
       );
+    protocol.actions = V1_transformPostDeploymentAction;
     protocol.stereotypes = element.stereotypes.map(V1_transformStereotype);
     protocol.taggedValues = element.taggedValues.map(V1_transformTaggedValue);
     return protocol;

@@ -30,6 +30,8 @@ import {
 import { V1_transformConnectionPointer } from './V1_ConnectionTransformer.js';
 import { V1_HostedServiceDeploymentConfiguration } from '../../../engine/functionActivator/V1_HostedServiceDeploymentConfiguration.js';
 import type { HostedServiceDeploymentConfiguration } from '../../../../../../../graph/metamodel/pure/functionActivator/HostedServiceDeploymentConfiguration.js';
+import type { PostDeploymentAction } from '../../../../../../../graph/metamodel/pure/functionActivator/PostDeploymentAction.js';
+import { V1_PostDeploymentAction } from '../../../engine/functionActivator/V1_PostDeploymentAction.js';
 
 export const V1_transformSnowflakeAppDeploymentConfiguration = (
   element: SnowflakeAppDeploymentConfiguration,
@@ -80,3 +82,10 @@ export const V1_transformHostedServiceDeploymentConfiguration = (
   protocol.port = element.port;
   return protocol;
 };
+
+// export const V1_transformPostDeploymentAction =
+// (element : PostDeploymentAction) : V1_PostDeploymentAction
+// {
+//   const protocol = new V1_PostDeploymentAction();
+
+// }

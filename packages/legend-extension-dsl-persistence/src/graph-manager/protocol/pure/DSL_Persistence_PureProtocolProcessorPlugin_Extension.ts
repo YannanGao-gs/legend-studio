@@ -83,6 +83,7 @@ export interface DSL_Persistence_PureProtocolProcessorPlugin_Extension
 
   V1_getExtraTriggerTransformers?(): V1_TriggerTransformer[];
 
+  //here
   V1_getExtraTriggerProtocolSerializers?(): V1_TriggerProtocolSerializer[];
 
   V1_getExtraTriggerProtocolDeserializers?(): V1_TriggerProtocolDeserializer[];
