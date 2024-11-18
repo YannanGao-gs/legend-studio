@@ -39,6 +39,7 @@ import {
   DataSpacePackageableElementExecutable,
 } from '../../../graph/metamodel/pure/model/packageableElements/dataSpace/DSL_DataSpace_DataSpace.js';
 import { getQueryFromDataspaceExecutable } from '../../DSL_DataSpace_GraphManagerHelper.js';
+import type { StoredFileGeneration } from '@finos/legend-storage';
 
 const DATASPACE_ANALYTICS_FILE_NAME = 'AnalyticsResult.json';
 const V1_DATASPACE_ANALYTICS_ARTIFACT_EXTENSION_KEY = 'dataSpace-analytics';
@@ -60,6 +61,28 @@ export const retrieveAnalyticsResultCache = async (
       ),
     ),
   );
+
+export const retrieveDataspaceArtifactsCache = async (
+  project: StoreProjectData,
+  versionId: string,
+  depotServerClient: DepotServerClient,
+): Promise<PlainObject<StoredFileGeneration>[]> => {
+  return depotServerClient.getGenerationFilesByType(
+    project,
+    versionId,
+    V1_DATASPACE_ANALYTICS_ARTIFACT_EXTENSION_KEY,
+  );
+};
+
+export const retrieveDataSpaceAnalysisFromFileGeneration = (
+  fileGeneration: StoredFileGeneration[],
+): PlainObject<DataSpaceAnalysisResult> | undefined => {
+  const fileContent = fileGeneration.find((fileGen) =>
+    fileGen.file.path.includes(DATASPACE_ANALYTICS_FILE_NAME),
+  )?.file.content;
+
+  return fileContent ? JSON.parse(fileContent) : undefined;
+};
 
 export const buildDataSpaceExecutableAnalysisResultFromExecutable = async (
   dataspace: DataSpace,
