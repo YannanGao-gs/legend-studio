@@ -5,7 +5,7 @@
     "tsBuildInfoFile": "build/dev.tsbuildinfo",
     "rootDir": "src"
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json", "../legend-storage/src/StoredFileGeneration.ts", "../legend-storage/src/DepotGeneration.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"],
   "references": [
     { "path": "./tsconfig.package.json" },
     { "path": "../legend-shared" },
