@@ -1,0 +1,149 @@
+[
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "Class_1",
+    "originalMilestonedProperties": [],
+    "package": "model",
+    "properties": [
+      {
+        "genericType": {
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "model::Class_3"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": { "lowerBound": 1, "upperBound": 1 },
+        "name": "property_1",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "Class_2",
+    "originalMilestonedProperties": [],
+    "package": "model",
+    "properties": [
+      {
+        "genericType": {
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "model::Class_3"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": { "lowerBound": 1, "upperBound": 1 },
+        "name": "property_1",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": ["model::Class_1"],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "Class_3",
+    "originalMilestonedProperties": [],
+    "package": "model",
+    "properties": [],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "Class_4",
+    "originalMilestonedProperties": [],
+    "package": "model",
+    "properties": [],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "diagram",
+    "classViews": [
+      {
+        "class": "model::Class_1",
+        "id": "3afb6477-8f3e-4005-8353-e13145057d1f",
+        "position": { "x": 579, "y": 213 },
+        "rectangle": { "height": 30, "width": 65.369140625 }
+      },
+      {
+        "class": "model::Class_2",
+        "id": "57eccdd6-4e8e-4167-846e-734b41522d8a",
+        "position": { "x": 216, "y": 194 },
+        "rectangle": { "height": 103, "width": 131 }
+      },
+      {
+        "class": "model::Class_3",
+        "id": "16afe4af-3aa2-4851-9f17-32b8dbcd6e1a",
+        "position": { "x": 422, "y": 93 },
+        "rectangle": { "height": 30, "width": 65.369140625 }
+      },
+      {
+        "class": "model::Class_4",
+        "id": "9d8b8c7f-1148-4d30-b72c-f9b94a3c06b7",
+        "position": { "x": 518, "y": 304 },
+        "rectangle": { "height": 30, "width": 65.369140625 }
+      }
+    ],
+    "generalizationViews": [
+      {
+        "line": {
+          "points": [
+            { "x": 280.8154296875, "y": 243.5 },
+            { "x": 615, "y": 226 }
+          ]
+        },
+        "sourceView": "57eccdd6-4e8e-4167-846e-734b41522d8a",
+        "targetView": "3afb6477-8f3e-4005-8353-e13145057d1f"
+      }
+    ],
+    "name": "diagram",
+    "package": "model",
+    "propertyViews": [
+      {
+        "line": {
+          "points": [
+            { "x": 301, "y": 249 },
+            { "x": 284, "y": 128 },
+            { "x": 442, "y": 112 }
+          ]
+        },
+        "property": { "class": "model::Class_2", "property": "property_1" },
+        "sourceView": "57eccdd6-4e8e-4167-846e-734b41522d8a",
+        "targetView": "16afe4af-3aa2-4851-9f17-32b8dbcd6e1a"
+      },
+      {
+        "line": {
+          "points": [
+            { "x": 608, "y": 229 },
+            { "x": 606, "y": 103 },
+            { "x": 450, "y": 107 }
+          ]
+        },
+        "property": { "class": "model::Class_1", "property": "property_1" },
+        "sourceView": "3afb6477-8f3e-4005-8353-e13145057d1f",
+        "targetView": "16afe4af-3aa2-4851-9f17-32b8dbcd6e1a"
+      }
+    ]
+  }
+]

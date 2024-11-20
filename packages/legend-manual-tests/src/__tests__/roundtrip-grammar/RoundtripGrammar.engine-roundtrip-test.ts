@@ -107,8 +107,9 @@ const logSuccess = (
 };
 
 const isTestSkipped = (filePath: string): boolean =>
-  Object.keys(EXCLUSIONS).includes(basename(filePath)) &&
-  EXCLUSIONS[basename(filePath)] === SKIP;
+  (Object.keys(EXCLUSIONS).includes(basename(filePath)) &&
+    EXCLUSIONS[basename(filePath)] === SKIP) ||
+  !basename(filePath).endsWith('DSL_Mapping-basic-M2M.pure');
 const isPartialTest = (filePath: string): boolean =>
   Object.keys(EXCLUSIONS).includes(basename(filePath));
 

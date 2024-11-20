@@ -90,6 +90,10 @@ import { V1_Multiplicity } from '../../../model/packageableElements/domain/V1_Mu
 import type { PureProtocolProcessorPlugin } from '../../../../PureProtocolProcessorPlugin.js';
 import { V1_ClassInstance } from '../../../model/valueSpecification/raw/V1_ClassInstance.js';
 import { V1_CByteArray } from '../../../model/valueSpecification/raw/V1_CByteArray.js';
+import {
+  V1_deserializeGenericType,
+  V1_GenericTypeModelSchema,
+} from './V1_TypeSerializationHelper.js';
 
 enum V1_ExecutionContextType {
   BASE_EXECUTION_CONTEXT = 'BaseExecutionContext',
@@ -167,7 +171,24 @@ enum V1_ValueSpecificationType {
 
 export const V1_variableModelSchema = createModelSchema(V1_Variable, {
   _type: usingConstantValueSchema(V1_ValueSpecificationType.VARIABLE),
-  class: optional(primitive()),
+  genericType: custom(
+    (val) => serialize(V1_GenericTypeModelSchema, val),
+    (val) => V1_deserializeGenericType(val, true),
+    {
+      beforeDeserialize: function (callback, jsonValue, jsonParentValue) {
+        const parentVal: {
+          type: string | undefined;
+          class: string | undefined;
+        } = jsonParentValue;
+        // backward compatible
+        if (parentVal.type !== undefined && parentVal.class === undefined) {
+          callback(null, parentVal.type);
+        } else {
+          callback(null, parentVal.class);
+        }
+      },
+    },
+  ),
   multiplicity: usingModelSchema(V1_multiplicityModelSchema),
   name: primitive(),
 });
@@ -231,15 +252,13 @@ const appliedPropertyModelSchema = (
     property: primitive(),
   });
 
-const packageableElementPtrSchema = createModelSchema(
-  V1_PackageableElementPtr,
-  {
+export const V1_packageableElementPtrSchema = (isType?: boolean) =>
+  createModelSchema(V1_PackageableElementPtr, {
     _type: usingConstantValueSchema(
       V1_ValueSpecificationType.PACKAGEABLE_ELEMENT_PTR,
     ),
     fullPath: primitive(),
-  },
-);
+  });
 
 const genericTypeInstanceSchema = (plugins: PureProtocolProcessorPlugin[]) =>
   createModelSchema(V1_GenericTypeInstance, {
@@ -924,7 +943,7 @@ class V1_ValueSpecificationSerializer
   visit_PackageableElementPtr(
     valueSpecification: V1_PackageableElementPtr,
   ): PlainObject<V1_ValueSpecification> {
-    return serialize(packageableElementPtrSchema, valueSpecification);
+    return serialize(V1_packageableElementPtrSchema(), valueSpecification);
   }
 
   visit_GenericTypeInstance(
@@ -1150,7 +1169,7 @@ export function V1_deserializeValueSpecification(
     case V1_ValueSpecificationType.CLASS: // deprecated
     case V1_ValueSpecificationType.MAPPING_INSTANCE: // deprecated
     case V1_ValueSpecificationType.PACKAGEABLE_ELEMENT_PTR:
-      return deserialize(packageableElementPtrSchema, json);
+      return deserialize(V1_packageableElementPtrSchema(), json);
     case V1_ValueSpecificationType.GENERIC_TYPE_INSTANCE:
       return deserialize(genericTypeInstanceSchema(plugins), json);
     default:
