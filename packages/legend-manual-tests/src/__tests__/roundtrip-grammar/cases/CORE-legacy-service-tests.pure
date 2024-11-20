@@ -6,27 +6,7 @@ Service model::ModelToModelMappingService
   autoActivateUpdates: true;
   execution: Single
   {
-    query: |model::target::_Firm.all()->graphFetchChecked(
-      #{
-        model::target::_Firm{
-          name,
-          type,
-          employees{
-            fullName
-          }
-        }
-      }#
-    )->serialize(
-      #{
-        model::target::_Firm{
-          name,
-          type,
-          employees{
-            fullName
-          }
-        }
-      }#
-    );
+    query: |model::target::_Firm.all()->graphFetchChecked(#{model::target::_Firm{name,type,employees{fullName}}}#)->serialize(#{model::target::_Firm{name,type,employees{fullName}}}#);
     mapping: model::ModelToModelMapping;
     runtime:
     #{
@@ -54,6 +34,14 @@ Service model::ModelToModelMappingService
   [
 
   ]
+  test: Single
+  {
+    data: '';
+    asserts:
+    [
+      { [], res: meta::pure::mapping::Result[1]|$res.values->toOne()->toString()->equalJsonStrings('') }
+    ];
+  }
 }
 
 
@@ -120,27 +108,7 @@ Mapping model::ModelToModelMapping
   [
     test_1
     (
-      query: |model::target::_Firm.all()->graphFetchChecked(
-  #{
-    model::target::_Firm{
-      name,
-      type,
-      employees{
-        fullName
-      }
-    }
-  }#
-)->serialize(
-  #{
-    model::target::_Firm{
-      name,
-      type,
-      employees{
-        fullName
-      }
-    }
-  }#
-);
+      query: |model::target::_Firm.all()->graphFetchChecked(#{model::target::_Firm{name,type,employees{fullName}}}#)->serialize(#{model::target::_Firm{name,type,employees{fullName}}}#);
       data:
       [
         <Object, JSON, model::Firm, '{"employees":[{"firstName":"firstName 92","lastName":"lastName 40"}],"type":"corp","legalName":"legalName 55"}'>

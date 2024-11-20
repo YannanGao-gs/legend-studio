@@ -72,6 +72,8 @@ import {
 import { V1_buildTestAssertion } from './V1_TestBuilderHelper.js';
 import type { TestSuite } from '../../../../../../../../graph/metamodel/pure/test/Test.js';
 import { DefaultValue } from '../../../../../../../../graph/metamodel/pure/packageableElements/domain/DefaultValue.js';
+import type { V1_GenericType } from '../../../../model/packageableElements/type/V1_GenericType.js';
+import { V1_getFullReturnTypePath } from '../../../../helpers/V1_DomainHelper.js';
 
 export const V1_buildTaggedValue = (
   taggedValue: V1_TaggedValue,
@@ -126,9 +128,9 @@ export const V1_buildVariable = (
     variable.name,
     `Variable 'name' field is missing or empty`,
   );
-  assertNonEmptyString(
-    variable.class,
-    `Variable 'class' field is missing or empty`,
+  assertNonNullable(
+    variable.genericType,
+    `Variable 'genericType' field is missing or empty`,
   );
   assertNonNullable(
     variable.multiplicity,
@@ -138,7 +140,7 @@ export const V1_buildVariable = (
     variable.multiplicity.lowerBound,
     variable.multiplicity.upperBound,
   );
-  const type = context.resolveType(variable.class);
+  const type = context.resolveType(variable.genericType.rawType.fullPath);
   return new RawVariableExpression(variable.name, multiplicity, type);
 };
 
@@ -196,8 +198,8 @@ export const V1_buildProperty = (
     property.name,
     `Property 'name' field is missing or empty`,
   );
-  assertNonEmptyString(
-    property.type,
+  assertNonNullable(
+    property.genericType,
     `Property 'type' field is missing or empty`,
   );
   assertNonNullable(
@@ -211,7 +213,7 @@ export const V1_buildProperty = (
       property.multiplicity.lowerBound,
       property.multiplicity.upperBound,
     ),
-    context.resolveGenericType(property.type),
+    context.resolveGenericType(V1_getFullReturnTypePath(property.genericType)),
     owner,
   );
   pureProperty.aggregation = property.aggregation
@@ -240,8 +242,8 @@ export const V1_buildDerivedProperty = (
     property.name,
     `Derived property 'name' field is missing or empty`,
   );
-  assertNonEmptyString(
-    property.returnType,
+  assertNonNullable(
+    property.returnGenericType,
     `Derived property 'returnType' field is missing or empty`,
   );
   assertNonNullable(
@@ -254,7 +256,9 @@ export const V1_buildDerivedProperty = (
       property.returnMultiplicity.lowerBound,
       property.returnMultiplicity.upperBound,
     ),
-    context.resolveGenericType(property.returnType),
+    context.resolveGenericType(
+      V1_getFullReturnTypePath(property.returnGenericType),
+    ),
     owner,
   );
   derivedProperty.stereotypes = property.stereotypes
@@ -307,9 +311,11 @@ export const V1_buildAssociationProperty = (
   context: V1_GraphBuilderContext,
   pureAssociation: Association,
 ): Property => {
-  const associatedPropertyClassType = guaranteeNonNullable(
-    associatedProperty.type,
-    `Association associated property 'type' field is missing`,
+  const associatedPropertyClassType = V1_getFullReturnTypePath(
+    guaranteeNonNullable(
+      associatedProperty.genericType,
+      `Association associated property 'type' field is missing`,
+    ),
   );
   validateAssociationProperty(
     pureAssociation,

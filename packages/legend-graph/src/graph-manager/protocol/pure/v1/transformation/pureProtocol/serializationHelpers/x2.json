@@ -1,0 +1,568 @@
+[
+  {
+    "_type": "Enumeration",
+    "name": "IncType",
+    "package": "model::target",
+    "stereotypes": [],
+    "taggedValues": [],
+    "values": [
+      {
+        "stereotypes": [],
+        "taggedValues": [],
+        "value": "LLC"
+      },
+      {
+        "stereotypes": [],
+        "taggedValues": [],
+        "value": "CORP"
+      }
+    ]
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "Firm",
+    "originalMilestonedProperties": [],
+    "package": "model",
+    "properties": [
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "model::Person"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1
+        },
+        "name": "employees",
+        "stereotypes": [],
+        "taggedValues": []
+      },
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "String"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "type",
+        "stereotypes": [],
+        "taggedValues": []
+      },
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "String"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "legalName",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "Person",
+    "originalMilestonedProperties": [],
+    "package": "model",
+    "properties": [
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "String"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "firstName",
+        "stereotypes": [],
+        "taggedValues": []
+      },
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "String"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "lastName",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "_Firm",
+    "originalMilestonedProperties": [],
+    "package": "model::target",
+    "properties": [
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "model::target::_Person"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1
+        },
+        "name": "employees",
+        "stereotypes": [],
+        "taggedValues": []
+      },
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "model::target::IncType"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "type",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [
+      "model::target::_LegalEntity"
+    ],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "_Person",
+    "originalMilestonedProperties": [],
+    "package": "model::target",
+    "properties": [
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "String"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "fullName",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "class",
+    "constraints": [],
+    "name": "_LegalEntity",
+    "originalMilestonedProperties": [],
+    "package": "model::target",
+    "properties": [
+      {
+        "genericType": {
+          "multiplicityArguments": [],
+          "rawType": {
+            "_type": "packageableType",
+            "fullPath": "String"
+          },
+          "typeArguments": [],
+          "typeVariableValues": []
+        },
+        "multiplicity": {
+          "lowerBound": 1,
+          "upperBound": 1
+        },
+        "name": "name",
+        "stereotypes": [],
+        "taggedValues": []
+      }
+    ],
+    "qualifiedProperties": [],
+    "stereotypes": [],
+    "superTypes": [],
+    "taggedValues": []
+  },
+  {
+    "_type": "mapping",
+    "associationMappings": [],
+    "classMappings": [
+      {
+        "_type": "pureInstance",
+        "class": "model::target::_Person",
+        "propertyMappings": [
+          {
+            "_type": "purePropertyMapping",
+            "explodeProperty": false,
+            "property": {
+              "class": "model::target::_Person",
+              "property": "fullName"
+            },
+            "source": "",
+            "transform": {
+              "_type": "lambda",
+              "body": [
+                {
+                  "_type": "property",
+                  "parameters": [
+                    [Object
+                    ]
+                  ],
+                  "property": "firstName"
+                }
+              ],
+              "parameters": []
+            }
+          }
+        ],
+        "root": true,
+        "srcClass": "model::Person"
+      },
+      {
+        "_type": "pureInstance",
+        "class": "model::target::_Firm",
+        "propertyMappings": [
+          {
+            "_type": "purePropertyMapping",
+            "explodeProperty": false,
+            "property": {
+              "class": "model::target::_Firm",
+              "property": "employees"
+            },
+            "source": "",
+            "target": "model_target__Person",
+            "transform": {
+              "_type": "lambda",
+              "body": [
+                {
+                  "_type": "property",
+                  "parameters": [
+                    [Object
+                    ]
+                  ],
+                  "property": "employees"
+                }
+              ],
+              "parameters": []
+            }
+          },
+          {
+            "_type": "purePropertyMapping",
+            "enumMappingId": "model_target_IncType",
+            "explodeProperty": false,
+            "property": {
+              "class": "model::target::_Firm",
+              "property": "type"
+            },
+            "source": "",
+            "transform": {
+              "_type": "lambda",
+              "body": [
+                {
+                  "_type": "property",
+                  "parameters": [
+                    [Object
+                    ]
+                  ],
+                  "property": "type"
+                }
+              ],
+              "parameters": []
+            }
+          },
+          {
+            "_type": "purePropertyMapping",
+            "explodeProperty": false,
+            "property": {
+              "class": "model::target::_Firm",
+              "property": "name"
+            },
+            "source": "",
+            "transform": {
+              "_type": "lambda",
+              "body": [
+                {
+                  "_type": "property",
+                  "parameters": [
+                    [Object
+                    ]
+                  ],
+                  "property": "legalName"
+                }
+              ],
+              "parameters": []
+            }
+          }
+        ],
+        "root": true,
+        "srcClass": "model::Firm"
+      }
+    ],
+    "enumerationMappings": [
+      {
+        "enumValueMappings": [
+          {
+            "enumValue": "LLC",
+            "sourceValues": [
+              {
+                "_type": "stringSourceValue",
+                "value": "llc"
+              }
+            ]
+          },
+          {
+            "enumValue": "CORP",
+            "sourceValues": [
+              {
+                "_type": "stringSourceValue",
+                "value": "corp"
+              }
+            ]
+          }
+        ],
+        "enumeration": "model::target::IncType"
+      }
+    ],
+    "includedMappings": [],
+    "name": "ModelToModelMapping",
+    "package": "model",
+    "tests": [
+      {
+        "assert": {
+          "_type": "expectedOutputMappingTestAssert",
+          "expectedOutput": "{\"defects\":[],\"source\":{\"defects\":[],\"source\":{\"number\":1,\"record\":\"{\\\"employees\\\":[{\\\"firstName\\\":\\\"firstName 92\\\",\\\"lastName\\\":\\\"lastName 40\\\"}],\\\"type\\\":\\\"corp\\\",\\\"legalName\\\":\\\"legalName 55\\\"}\"},\"value\":{\"legalName\":\"legalName 55\",\"type\":\"corp\",\"employees\":[{\"firstName\":\"firstName 92\"}]}},\"value\":{\"name\":\"legalName 55\",\"type\":\"CORP\",\"employees\":[{\"fullName\":\"firstName 92\"}]}}"
+        },
+        "inputData": [
+          {
+            "_type": "object",
+            "data": "{\"employees\":[{\"firstName\":\"firstName 92\",\"lastName\":\"lastName 40\"}],\"type\":\"corp\",\"legalName\":\"legalName 55\"}",
+            "inputType": "JSON",
+            "sourceClass": "model::Firm"
+          }
+        ],
+        "name": "test_1",
+        "query": {
+          "_type": "lambda",
+          "body": [
+            {
+              "_type": "func",
+              "function": "serialize",
+              "parameters": [
+                {
+                  "_type": "func",
+                  "function": "graphFetchChecked",
+                  "parameters": [
+                    [Object
+                    ],
+                    [Object
+                    ]
+                  ]
+                },
+                {
+                  "_type": "classInstance",
+                  "type": "rootGraphFetchTree",
+                  "value": {
+                    "_type": "rootGraphFetchTree",
+                    "class": "model::target::_Firm",
+                    "subTrees": [Array
+                    ],
+                    "subTypeTrees": [Array
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "parameters": []
+        }
+      }
+    ]
+  },
+  {
+    "_type": "service",
+    "autoActivateUpdates": true,
+    "documentation": "",
+    "execution": {
+      "_type": "pureSingleExecution",
+      "func": {
+        "_type": "lambda",
+        "body": [
+          {
+            "_type": "func",
+            "function": "serialize",
+            "parameters": [
+              {
+                "_type": "func",
+                "function": "graphFetchChecked",
+                "parameters": [
+                  {
+                    "_type": "func",
+                    "function": "getAll",
+                    "parameters": [Array
+                    ]
+                  },
+                  {
+                    "_type": "classInstance",
+                    "type": "rootGraphFetchTree",
+                    "value": [Object
+                    ]
+                  }
+                ]
+              },
+              {
+                "_type": "classInstance",
+                "type": "rootGraphFetchTree",
+                "value": {
+                  "_type": "rootGraphFetchTree",
+                  "class": "model::target::_Firm",
+                  "subTrees": [
+                    [Object
+                    ],
+                    [Object
+                    ],
+                    [Object
+                    ]
+                  ],
+                  "subTypeTrees": []
+                }
+              }
+            ]
+          }
+        ],
+        "parameters": []
+      },
+      "mapping": "model::ModelToModelMapping",
+      "runtime": {
+        "_type": "engineRuntime",
+        "connectionStores": [],
+        "connections": [
+          {
+            "store": {
+              "path": "ModelStore",
+              "type": "STORE"
+            },
+            "storeConnections": [
+              {
+                "connection": {
+                  "_type": "JsonModelConnection",
+                  "class": "model::Firm",
+                  "url": "data:application/json,"
+                },
+                "id": "connection_1"
+              }
+            ]
+          }
+        ],
+        "mappings": [
+          {
+            "path": "model::ModelToModelMapping",
+            "type": "MAPPING"
+          }
+        ]
+      }
+    },
+    "name": "ModelToModelMappingService",
+    "owners": [],
+    "package": "model",
+    "pattern": "/myURL",
+    "postValidations": [],
+    "stereotypes": [],
+    "taggedValues": [],
+    "testSuites": []
+  },
+  {
+    "_type": "runtime",
+    "name": "runtime",
+    "package": "model",
+    "runtimeValue": {
+      "_type": "engineRuntime",
+      "connectionStores": [],
+      "connections": [
+        {
+          "store": {
+            "path": "ModelStore",
+            "type": "STORE"
+          },
+          "storeConnections": [
+            {
+              "connection": {
+                "_type": "JsonModelConnection",
+                "class": "model::Firm",
+                "url": "data:application/json,%7B%22employees%22%3A%5B%7B%22firstName%22%3A%22firstName%2013%22%2C%22lastName%22%3A%22lastName%2035%22%7D%5D%7D"
+              },
+              "id": "connection_1"
+            }
+          ]
+        }
+      ],
+      "mappings": [
+        {
+          "path": "model::ModelToModelMapping",
+          "type": "MAPPING"
+        }
+      ]
+    }
+  }
+]
